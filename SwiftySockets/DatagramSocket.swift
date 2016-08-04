@@ -109,7 +109,7 @@ class DatagramSocket {
         }
     }
 
-    private func send(data: Data, to addr: sockaddr_in6?) {
+    func send(data: Data, to addr: sockaddr_in6?) {
         queue.async { [weak self] in
             self?.sendQueue.append((data: data, addr: addr))
             self?.writeQueued()
