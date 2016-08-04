@@ -14,12 +14,12 @@ import Foundation
 
 extension sockaddr_in6 {
 
-    var port: UInt16 {
+    public var port: UInt16 {
         get { return sin6_port.bigEndian }
         set { sin6_port = newValue.bigEndian }
     }
 
-    var ip: [UInt8] {
+    public var ip: [UInt8] {
         get {
             var src = sin6_addr.__u6_addr.__u6_addr8
             var result = [UInt8](repeatElement(0, count: 16))
@@ -39,21 +39,21 @@ extension sockaddr_in6 {
         }
     }
 
-    var valid: Bool {
+    public var valid: Bool {
         return (Int32(sin6_family) == AF_INET6) && (Int(sin6_len) == sizeof(sockaddr_in6.self))
     }
 
 
-    static func any(port: UInt16 = 0) -> sockaddr_in6 {
+    public static func any(port: UInt16 = 0) -> sockaddr_in6 {
         return sockaddr_in6(ip: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], port: port)
     }
 
-    static func loopback(port: UInt16 = 0) -> sockaddr_in6 {
+    public static func loopback(port: UInt16 = 0) -> sockaddr_in6 {
         return sockaddr_in6(ip: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1], port: port)
     }
 
 
-    init() {
+    public init() {
         self.init(
             sin6_len: UInt8(sizeof(sockaddr_in6.self)),
             sin6_family: sa_family_t(AF_INET6),
@@ -65,25 +65,25 @@ extension sockaddr_in6 {
     }
 
     //IP4 or IP6
-    init(ip: [UInt8], port: UInt16) {
+    public init(ip: [UInt8], port: UInt16) {
         self.init()
         self.ip = ip
         self.port = port
     }
 
-    init(_ block: @noescape(UnsafeMutablePointer<sockaddr>,UnsafeMutablePointer<socklen_t>)->()) {
+    public init(_ block: @noescape(UnsafeMutablePointer<sockaddr>,UnsafeMutablePointer<socklen_t>)->()) {
         self.init()
         self.withMutableSockaddr(block)
     }
 
-    init(sa: sockaddr_in) {
+    public init(sa: sockaddr_in) {
         let ip4 = sa.sin_addr.s_addr.bigEndian
         let ip = (0..<4).map { UInt8((ip4 >> ($0*8)) & 0xFF) }
         self.init(ip: ip, port: sa.sin_port.bigEndian)
     }
 
     //NB: sockaddr is actually too small to contain a complete sockaddr_in6. Hence this pass-by-pointer bullshit.
-    init?(sockaddr sa: UnsafePointer<sockaddr>) {
+    public init?(sockaddr sa: UnsafePointer<sockaddr>) {
         if Int32(sa.pointee.sa_family) == AF_INET6 {
             guard Int(sa.pointee.sa_len) == sizeof(sockaddr_in6.self) else { return nil }
             self.init()
@@ -100,7 +100,7 @@ extension sockaddr_in6 {
 
 
 
-    func withSockaddr<T>(_ block: @noescape (UnsafePointer<sockaddr>,socklen_t)->T) -> T {
+    public func withSockaddr<T>(_ block: @noescape (UnsafePointer<sockaddr>,socklen_t)->T) -> T {
         let thisIsRidiculous: @noescape(UnsafePointer<sockaddr_in6>)->T = { ptr in
             return block(UnsafePointer<sockaddr>(ptr), socklen_t(sizeof(sockaddr_in6.self)))
         }
@@ -108,7 +108,7 @@ extension sockaddr_in6 {
         return thisIsRidiculous(&sa)
     }
 
-    mutating func withMutableSockaddr<T>(_ block: @noescape(UnsafeMutablePointer<sockaddr>,UnsafeMutablePointer<socklen_t>)->T) -> T {
+    public mutating func withMutableSockaddr<T>(_ block: @noescape(UnsafeMutablePointer<sockaddr>,UnsafeMutablePointer<socklen_t>)->T) -> T {
         var maxLen = socklen_t(sizeof(sockaddr_in6.self))
         let thisIsRidiculous: @noescape(UnsafeMutablePointer<sockaddr_in6>)->T = { ptr in
             return block(UnsafeMutablePointer<sockaddr>(ptr), &maxLen)
@@ -122,7 +122,7 @@ private let sock_getaddrinfo = getaddrinfo
 
 extension sockaddr_in6 {
 
-    static func getaddrinfo(hostname: String, port: UInt16, completion: ([sockaddr_in6])->()) {
+    public static func getaddrinfo(hostname: String, port: UInt16, completion: ([sockaddr_in6])->()) {
         DispatchQueue.global().async {
             let cstr = hostname.cString(using: .utf8)
             let port = "\(port)".cString(using: .utf8)

@@ -10,20 +10,20 @@ import Foundation
 
 
 
-protocol DatagramSocketDelegate: class {
+public protocol DatagramSocketDelegate: class {
     func datagramSocket(_ socket: DatagramSocket, didReceive data: Data, from sender: sockaddr_in6)
 }
 
 
 
-class DatagramSocket {
+public class DatagramSocket {
 
-    var maxReadSize = 1500
+    public var maxReadSize = 1500
 
-    weak var delegate: DatagramSocketDelegate?
+    public weak var delegate: DatagramSocketDelegate?
     private let sock: Socket6
-    var localAddress: sockaddr_in6 { return sock.address }
-    private(set) var remoteAddress: sockaddr_in6?
+    public var localAddress: sockaddr_in6 { return sock.address }
+    public private(set) var remoteAddress: sockaddr_in6?
 
     private(set) var isOpen = true
 
@@ -44,23 +44,23 @@ class DatagramSocket {
         writeSource.resume()
     }
 
-    convenience init(boundTo address: sockaddr_in6, delegate: DatagramSocketDelegate? = nil) throws {
+    public convenience init(boundTo address: sockaddr_in6, delegate: DatagramSocketDelegate? = nil) throws {
         self.init(socket: Socket6(type: SOCK_DGRAM), delegate: delegate)
         try self.sock.bind(to: address)
     }
 
-    convenience init(boundTo port: UInt16, delegate: DatagramSocketDelegate? = nil) throws {
+    public convenience init(boundTo port: UInt16, delegate: DatagramSocketDelegate? = nil) throws {
         self.init(socket: Socket6(type: SOCK_DGRAM), delegate: delegate)
         try self.sock.bind(to: sockaddr_in6.any(port: port))
     }
 
-    convenience init(connectedTo address: sockaddr_in6, delegate: DatagramSocketDelegate? = nil) throws {
+    public convenience init(connectedTo address: sockaddr_in6, delegate: DatagramSocketDelegate? = nil) throws {
         self.init(socket: Socket6(type: SOCK_DGRAM), delegate: delegate)
         try self.sock.connect(to: address)
         self.remoteAddress = address
     }
 
-    func close() {
+    public func close() {
         readSource.cancel()
         writeSource.cancel()
         try? sock.close()
@@ -109,7 +109,7 @@ class DatagramSocket {
         }
     }
 
-    func send(data: Data, to addr: sockaddr_in6?) {
+    public func send(data: Data, to addr: sockaddr_in6?) {
         queue.async { [weak self] in
             self?.sendQueue.append((data: data, addr: addr))
             self?.writeQueued()

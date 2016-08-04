@@ -15,7 +15,7 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "770A96CA1D53EE8C00F35198"
-               BuildableName = "SwiftySockets_watchOS.framework"
+               BuildableName = "SwiftySockets.framework"
                BlueprintName = "SwiftySockets_watchOS"
                ReferencedContainer = "container:SwiftySockets.xcodeproj">
             </BuildableReference>
@@ -46,7 +46,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "770A96CA1D53EE8C00F35198"
-            BuildableName = "SwiftySockets_watchOS.framework"
+            BuildableName = "SwiftySockets.framework"
             BlueprintName = "SwiftySockets_watchOS"
             ReferencedContainer = "container:SwiftySockets.xcodeproj">
          </BuildableReference>
@@ -64,7 +64,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "770A96CA1D53EE8C00F35198"
-            BuildableName = "SwiftySockets_watchOS.framework"
+            BuildableName = "SwiftySockets.framework"
             BlueprintName = "SwiftySockets_watchOS"
             ReferencedContainer = "container:SwiftySockets.xcodeproj">
          </BuildableReference>

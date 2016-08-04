@@ -9,19 +9,19 @@
 import Foundation
 
 
-class StreamSocket : NSObject, StreamDelegate {
+public class StreamSocket : NSObject, StreamDelegate {
 
     private let queue = DispatchQueue(label: "StreamSocket")
     private let istream: InputStream
     private let ostream: NSOutputStream
 
-    private(set) var isOpen = true
+    public private(set) var isOpen = true
 
-    convenience init(sock: Socket6) {
+    public convenience init(sock: Socket6) {
         self.init(fd: sock.fd)
     }
 
-    init(fd: Int32) {
+    public init(fd: Int32) {
 
         var cfistream: Unmanaged<CFReadStream>?
         var cfostream: Unmanaged<CFWriteStream>?
@@ -46,7 +46,7 @@ class StreamSocket : NSObject, StreamDelegate {
         }
     }
 
-    static func connect(to address: sockaddr_in6, completion: (StreamSocket?,NSError?)->()) {
+    public static func connect(to address: sockaddr_in6, completion: (StreamSocket?,NSError?)->()) {
 
         let sock = Socket6(type: SOCK_STREAM)
 
@@ -69,7 +69,7 @@ class StreamSocket : NSObject, StreamDelegate {
         close()
     }
 
-    func close() {
+    public func close() {
         istream.close()
         ostream.close()
         istream.delegate = nil
@@ -79,7 +79,7 @@ class StreamSocket : NSObject, StreamDelegate {
 
 
 
-    func stream(_ aStream: Stream, handle eventCode: Stream.Event) {
+    public func stream(_ aStream: Stream, handle eventCode: Stream.Event) {
         guard isOpen else { return }
         if eventCode.contains(.hasBytesAvailable) {
             queue.async { self.tryRead() }
@@ -155,28 +155,28 @@ class StreamSocket : NSObject, StreamDelegate {
         }
     }
 
-    func read(_ count: Int, completion: (Data?)->()) {
+    public func read(_ count: Int, completion: (Data?)->()) {
         queue.async {
             self.readQueue.append((min: count, max: count, completion: completion))
             self.tryRead()
         }
     }
 
-    func read(max: Int, completion: (Data?)->()) {
+    public func read(max: Int, completion: (Data?)->()) {
         queue.async {
             self.readQueue.append((min: 1, max: max, completion: completion))
             self.tryRead()
         }
     }
 
-    func read(min: Int, max: Int, completion: (Data?)->()) {
+    public func read(min: Int, max: Int, completion: (Data?)->()) {
         queue.async {
             self.readQueue.append((min: min, max: max, completion: completion))
             self.tryRead()
         }
     }
 
-    func write(_ data: Data) {
+    public func write(_ data: Data) {
         queue.async {
             self.writeQueue.append(data)
             self.tryWrite()
@@ -188,7 +188,7 @@ class StreamSocket : NSObject, StreamDelegate {
 
 extension Socket6 {
 
-    func listen(acceptHandler: (Socket6)->()) throws {
+    public func listen(acceptHandler: (Socket6)->()) throws {
         try listen()
         DispatchQueue.global().async {
             while let newsock = try? self.accept() {

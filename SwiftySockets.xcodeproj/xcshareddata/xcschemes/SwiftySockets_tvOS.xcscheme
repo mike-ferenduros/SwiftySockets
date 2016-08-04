@@ -15,7 +15,7 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "770A96D71D53EE9F00F35198"
-               BuildableName = "SwiftySockets_tvOS.framework"
+               BuildableName = "SwiftySockets.framework"
                BlueprintName = "SwiftySockets_tvOS"
                ReferencedContainer = "container:SwiftySockets.xcodeproj">
             </BuildableReference>
@@ -46,7 +46,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "770A96D71D53EE9F00F35198"
-            BuildableName = "SwiftySockets_tvOS.framework"
+            BuildableName = "SwiftySockets.framework"
             BlueprintName = "SwiftySockets_tvOS"
             ReferencedContainer = "container:SwiftySockets.xcodeproj">
          </BuildableReference>
@@ -64,7 +64,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "770A96D71D53EE9F00F35198"
-            BuildableName = "SwiftySockets_tvOS.framework"
+            BuildableName = "SwiftySockets.framework"
             BlueprintName = "SwiftySockets_tvOS"
             ReferencedContainer = "container:SwiftySockets.xcodeproj">
          </BuildableReference>
