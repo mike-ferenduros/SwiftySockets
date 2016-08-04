@@ -7,4 +7,6 @@ StreamSocket and DatagramSocket are higher-level classes for doing asynchronous 
 
 SwiftySockets is IPv6 only. That isn't quite as dumb as it seems, as your OS will bridge to and from IPv4 networks automagically.
 
+It also requires Swift 3 / XCode 8, although you could probably port it back to Swift 2 without much trouble.
+
 At this point, just read the code, it's fairly self-explanatory.
