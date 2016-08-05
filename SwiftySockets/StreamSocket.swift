@@ -11,21 +11,20 @@ import Foundation
 
 public class StreamSocket : NSObject, StreamDelegate {
 
+    public let socket: Socket6
+
     private let queue = DispatchQueue(label: "StreamSocket")
     private let istream: InputStream
     private let ostream: NSOutputStream
 
     public private(set) var isOpen = true
 
-    public convenience init(sock: Socket6) {
-        self.init(fd: sock.fd)
-    }
-
-    public init(fd: Int32) {
+    public init(socket: Socket6) {
+        self.socket = socket
 
         var cfistream: Unmanaged<CFReadStream>?
         var cfostream: Unmanaged<CFWriteStream>?
-        CFStreamCreatePairWithSocket(nil, fd, &cfistream, &cfostream)
+        CFStreamCreatePairWithSocket(nil, self.socket.fd, &cfistream, &cfostream)
 
         self.istream = cfistream!.takeRetainedValue()
         self.ostream = cfostream!.takeRetainedValue()
@@ -54,7 +53,7 @@ public class StreamSocket : NSObject, StreamDelegate {
             do {
                 try sock.connect(to: address)
                 DispatchQueue.main.async {
-                    completion(StreamSocket(fd: sock.fd), nil)
+                    completion(StreamSocket(socket: sock), nil)
                 }
             } catch let err as NSError {
                 DispatchQueue.main.async {

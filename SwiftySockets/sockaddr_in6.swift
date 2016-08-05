@@ -71,11 +71,6 @@ extension sockaddr_in6 {
         self.port = port
     }
 
-    public init(_ block: @noescape(UnsafeMutablePointer<sockaddr>,UnsafeMutablePointer<socklen_t>)->()) {
-        self.init()
-        self.withMutableSockaddr(block)
-    }
-
     public init(sa: sockaddr_in) {
         let ip4 = sa.sin_addr.s_addr.bigEndian
         let ip = (0..<4).map { UInt8((ip4 >> ($0*8)) & 0xFF) }

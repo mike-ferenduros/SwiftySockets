@@ -1,6 +1,6 @@
 //
 //  Socket6.swift
-//  vrtest
+//  SwiftySockets
 //
 //  Created by Michael Ferenduros on 04/08/2016.
 //  Copyright © 2016 Mike Ferenduros. All rights reserved.
@@ -39,10 +39,18 @@ public struct Socket6 {
 
     public let fd: Int32
 
-    public var address: sockaddr_in6 {
-        return sockaddr_in6({ getsockname(fd, $0, $1) })
+
+    public var sockname: sockaddr_in6 {
+        var address = sockaddr_in6()
+        _ = address.withMutableSockaddr { getsockname(fd, $0, $1) }
+        return address
     }
 
+    public var peername: sockaddr_in6? {
+        var address = sockaddr_in6()
+        let result = address.withMutableSockaddr { getpeername(fd, $0, $1) }
+        return result == 0 ? address : nil
+    }
 
 
     public init(fd: Int32) {

@@ -99,9 +99,9 @@
 		770A965E1D53E0C200F35198 /* SwiftySockets */ = {
 			isa = PBXGroup;
 			children = (
-				770A96761D53E0EB00F35198 /* DatagramSocket.swift */,
 				770A96771D53E0EB00F35198 /* sockaddr_in6.swift */,
 				770A96781D53E0EB00F35198 /* Socket6.swift */,
+				770A96761D53E0EB00F35198 /* DatagramSocket.swift */,
 				770A96791D53E0EB00F35198 /* StreamSocket.swift */,
 			);
 			path = SwiftySockets;

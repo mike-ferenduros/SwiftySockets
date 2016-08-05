@@ -21,9 +21,7 @@ public class DatagramSocket {
     public var maxReadSize = 1500
 
     public weak var delegate: DatagramSocketDelegate?
-    private let sock: Socket6
-    public var localAddress: sockaddr_in6 { return sock.address }
-    public private(set) var remoteAddress: sockaddr_in6?
+    public let socket: Socket6
 
     private(set) var isOpen = true
 
@@ -34,10 +32,10 @@ public class DatagramSocket {
 
 
     private init(socket: Socket6, delegate: DatagramSocketDelegate? = nil) {
-        self.sock = Socket6(type: SOCK_DGRAM)
+        self.socket = Socket6(type: SOCK_DGRAM)
 
-        readSource = DispatchSource.makeReadSource(fileDescriptor: sock.fd, queue: queue)
-        writeSource = DispatchSource.makeWriteSource(fileDescriptor: sock.fd, queue: queue)
+        readSource = DispatchSource.makeReadSource(fileDescriptor: socket.fd, queue: queue)
+        writeSource = DispatchSource.makeWriteSource(fileDescriptor: socket.fd, queue: queue)
         readSource.setEventHandler { [weak self] in self?.readDatagrams() }
         writeSource.setEventHandler { [weak self] in self?.writeQueued() }
         readSource.resume()
@@ -46,24 +44,23 @@ public class DatagramSocket {
 
     public convenience init(boundTo address: sockaddr_in6, delegate: DatagramSocketDelegate? = nil) throws {
         self.init(socket: Socket6(type: SOCK_DGRAM), delegate: delegate)
-        try self.sock.bind(to: address)
+        try self.socket.bind(to: address)
     }
 
     public convenience init(boundTo port: UInt16, delegate: DatagramSocketDelegate? = nil) throws {
         self.init(socket: Socket6(type: SOCK_DGRAM), delegate: delegate)
-        try self.sock.bind(to: sockaddr_in6.any(port: port))
+        try self.socket.bind(to: sockaddr_in6.any(port: port))
     }
 
     public convenience init(connectedTo address: sockaddr_in6, delegate: DatagramSocketDelegate? = nil) throws {
         self.init(socket: Socket6(type: SOCK_DGRAM), delegate: delegate)
-        try self.sock.connect(to: address)
-        self.remoteAddress = address
+        try self.socket.connect(to: address)
     }
 
     public func close() {
         readSource.cancel()
         writeSource.cancel()
-        try? sock.close()
+        try? socket.close()
     }
 
     deinit {
@@ -76,7 +73,7 @@ public class DatagramSocket {
     private func readDatagrams() {
         guard isOpen else { return }
 
-        while let (data,sender) = try? sock.recvfrom(length: self.maxReadSize, flags: MSG_DONTWAIT) {
+        while let (data,sender) = try? socket.recvfrom(length: self.maxReadSize, flags: MSG_DONTWAIT) {
 
             DispatchQueue.main.async {
                 self.delegate?.datagramSocket(self, didReceive: data, from: sender)
@@ -96,9 +93,9 @@ public class DatagramSocket {
 
             do {
                 if let addr = item.addr {
-                    _ = try sock.send(buffer: item.data, to: addr, flags: MSG_DONTWAIT)
+                    _ = try socket.send(buffer: item.data, to: addr, flags: MSG_DONTWAIT)
                 } else {
-                    _ = try sock.send(buffer: item.data, flags: MSG_DONTWAIT)
+                    _ = try socket.send(buffer: item.data, flags: MSG_DONTWAIT)
                 }
             } catch let err as NSError {
 
