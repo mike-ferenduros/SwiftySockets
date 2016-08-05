@@ -9,9 +9,6 @@
 import Foundation
 
 
-//No abstraction or RAII or anything like that, just an wrapper for a limited API subset.
-
-
 private let sock_close = close
 private let sock_setsockopt = setsockopt
 private let sock_getsockopt = getsockopt
@@ -25,7 +22,10 @@ private let sock_recv = recv
 private let sock_recvfrom = recvfrom
 
 
-
+/**
+    Wrapper for socket descriptor, providing a slightly friendlier interface to the socket API
+    Lifetime management is NOT handled
+*/
 public struct Socket6 {
 
     private func check(_ result: Int) throws { try check(Int32(result)) }
@@ -37,26 +37,30 @@ public struct Socket6 {
     }
 
 
+    ///The socket descriptor
     public let fd: Int32
 
 
+    ///The socket's locally bound address, or zeroes if not applicable
     public var sockname: sockaddr_in6 {
         var address = sockaddr_in6()
         _ = address.withMutableSockaddr { getsockname(fd, $0, $1) }
         return address
     }
 
+    ///The socket's connected address, or nil if the socket is not connected or an error occurs
     public var peername: sockaddr_in6? {
         var address = sockaddr_in6()
         let result = address.withMutableSockaddr { getpeername(fd, $0, $1) }
         return result == 0 ? address : nil
     }
 
-
+    ///Initialise with an existing descriptor
     public init(fd: Int32) {
         self.fd = fd
     }
 
+    ///Initialise with the desired type (usually SOCK_STREAM or SOCK_DGRAM)
     public init(type: Int32 = SOCK_STREAM) {
         self.init(fd: socket(AF_INET6, type, 0))
     }
