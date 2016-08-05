@@ -7,14 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		770A96B11D53EE2500F35198 /* SwiftySockets_iOS.h in Headers */ = {isa = PBXBuildFile; fileRef = 770A96AF1D53EE2500F35198 /* SwiftySockets_iOS.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		770A96B51D53EE2A00F35198 /* DatagramSocket.swift in Sources */ = {isa = PBXBuildFile; fileRef = 770A96761D53E0EB00F35198 /* DatagramSocket.swift */; };
 		770A96B61D53EE2A00F35198 /* sockaddr_in6.swift in Sources */ = {isa = PBXBuildFile; fileRef = 770A96771D53E0EB00F35198 /* sockaddr_in6.swift */; };
 		770A96B71D53EE2A00F35198 /* Socket6.swift in Sources */ = {isa = PBXBuildFile; fileRef = 770A96781D53E0EB00F35198 /* Socket6.swift */; };
 		770A96B81D53EE2A00F35198 /* StreamSocket.swift in Sources */ = {isa = PBXBuildFile; fileRef = 770A96791D53E0EB00F35198 /* StreamSocket.swift */; };
-		770A96C21D53EE4300F35198 /* SwiftySockets_macOS.h in Headers */ = {isa = PBXBuildFile; fileRef = 770A96C01D53EE4300F35198 /* SwiftySockets_macOS.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		770A96CF1D53EE8C00F35198 /* SwiftySockets_watchOS.h in Headers */ = {isa = PBXBuildFile; fileRef = 770A96CD1D53EE8C00F35198 /* SwiftySockets_watchOS.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		770A96DC1D53EEA000F35198 /* SwiftySockets_tvOS.h in Headers */ = {isa = PBXBuildFile; fileRef = 770A96DA1D53EEA000F35198 /* SwiftySockets_tvOS.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		770A96E01D53EEAF00F35198 /* DatagramSocket.swift in Sources */ = {isa = PBXBuildFile; fileRef = 770A96761D53E0EB00F35198 /* DatagramSocket.swift */; };
 		770A96E11D53EEAF00F35198 /* sockaddr_in6.swift in Sources */ = {isa = PBXBuildFile; fileRef = 770A96771D53E0EB00F35198 /* sockaddr_in6.swift */; };
 		770A96E21D53EEAF00F35198 /* Socket6.swift in Sources */ = {isa = PBXBuildFile; fileRef = 770A96781D53E0EB00F35198 /* Socket6.swift */; };
@@ -35,17 +31,17 @@
 		770A96781D53E0EB00F35198 /* Socket6.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Socket6.swift; sourceTree = "<group>"; };
 		770A96791D53E0EB00F35198 /* StreamSocket.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StreamSocket.swift; sourceTree = "<group>"; };
 		770A96AD1D53EE2500F35198 /* SwiftySockets.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = SwiftySockets.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		770A96AF1D53EE2500F35198 /* SwiftySockets_iOS.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SwiftySockets_iOS.h; sourceTree = "<group>"; };
-		770A96B01D53EE2500F35198 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		770A96BE1D53EE4300F35198 /* SwiftySockets.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = SwiftySockets.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		770A96C01D53EE4300F35198 /* SwiftySockets_macOS.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SwiftySockets_macOS.h; sourceTree = "<group>"; };
-		770A96C11D53EE4300F35198 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		770A96CB1D53EE8C00F35198 /* SwiftySockets.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = SwiftySockets.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		770A96CD1D53EE8C00F35198 /* SwiftySockets_watchOS.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SwiftySockets_watchOS.h; sourceTree = "<group>"; };
-		770A96CE1D53EE8C00F35198 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		770A96D81D53EE9F00F35198 /* SwiftySockets.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = SwiftySockets.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		770A96DA1D53EEA000F35198 /* SwiftySockets_tvOS.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SwiftySockets_tvOS.h; sourceTree = "<group>"; };
-		770A96DB1D53EEA000F35198 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		77ACDFB41D540E05000349B1 /* Info_iOS.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info_iOS.plist; sourceTree = "<group>"; };
+		77ACDFB51D540E05000349B1 /* Info_macOS.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info_macOS.plist; sourceTree = "<group>"; };
+		77ACDFB61D540E05000349B1 /* Info_tvOS.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info_tvOS.plist; sourceTree = "<group>"; };
+		77ACDFB71D540E05000349B1 /* Info_watchOS.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info_watchOS.plist; sourceTree = "<group>"; };
+		77ACDFB81D540E05000349B1 /* SwiftySockets_iOS.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SwiftySockets_iOS.h; sourceTree = "<group>"; };
+		77ACDFB91D540E05000349B1 /* SwiftySockets_macOS.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SwiftySockets_macOS.h; sourceTree = "<group>"; };
+		77ACDFBA1D540E05000349B1 /* SwiftySockets_tvOS.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SwiftySockets_tvOS.h; sourceTree = "<group>"; };
+		77ACDFBB1D540E05000349B1 /* SwiftySockets_watchOS.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SwiftySockets_watchOS.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -84,10 +80,7 @@
 			isa = PBXGroup;
 			children = (
 				770A965E1D53E0C200F35198 /* SwiftySockets */,
-				770A96AE1D53EE2500F35198 /* SwiftySockets_iOS */,
-				770A96BF1D53EE4300F35198 /* SwiftySockets_macOS */,
-				770A96CC1D53EE8C00F35198 /* SwiftySockets_watchOS */,
-				770A96D91D53EEA000F35198 /* SwiftySockets_tvOS */,
+				77ACDFB31D540E05000349B1 /* Plumbing */,
 				770A965D1D53E0C200F35198 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -114,40 +107,20 @@
 			path = SwiftySockets;
 			sourceTree = "<group>";
 		};
-		770A96AE1D53EE2500F35198 /* SwiftySockets_iOS */ = {
+		77ACDFB31D540E05000349B1 /* Plumbing */ = {
 			isa = PBXGroup;
 			children = (
-				770A96AF1D53EE2500F35198 /* SwiftySockets_iOS.h */,
-				770A96B01D53EE2500F35198 /* Info.plist */,
+				77ACDFB41D540E05000349B1 /* Info_iOS.plist */,
+				77ACDFB51D540E05000349B1 /* Info_macOS.plist */,
+				77ACDFB61D540E05000349B1 /* Info_tvOS.plist */,
+				77ACDFB71D540E05000349B1 /* Info_watchOS.plist */,
+				77ACDFB81D540E05000349B1 /* SwiftySockets_iOS.h */,
+				77ACDFB91D540E05000349B1 /* SwiftySockets_macOS.h */,
+				77ACDFBA1D540E05000349B1 /* SwiftySockets_tvOS.h */,
+				77ACDFBB1D540E05000349B1 /* SwiftySockets_watchOS.h */,
 			);
-			path = SwiftySockets_iOS;
-			sourceTree = "<group>";
-		};
-		770A96BF1D53EE4300F35198 /* SwiftySockets_macOS */ = {
-			isa = PBXGroup;
-			children = (
-				770A96C01D53EE4300F35198 /* SwiftySockets_macOS.h */,
-				770A96C11D53EE4300F35198 /* Info.plist */,
-			);
-			path = SwiftySockets_macOS;
-			sourceTree = "<group>";
-		};
-		770A96CC1D53EE8C00F35198 /* SwiftySockets_watchOS */ = {
-			isa = PBXGroup;
-			children = (
-				770A96CD1D53EE8C00F35198 /* SwiftySockets_watchOS.h */,
-				770A96CE1D53EE8C00F35198 /* Info.plist */,
-			);
-			path = SwiftySockets_watchOS;
-			sourceTree = "<group>";
-		};
-		770A96D91D53EEA000F35198 /* SwiftySockets_tvOS */ = {
-			isa = PBXGroup;
-			children = (
-				770A96DA1D53EEA000F35198 /* SwiftySockets_tvOS.h */,
-				770A96DB1D53EEA000F35198 /* Info.plist */,
-			);
-			path = SwiftySockets_tvOS;
+			name = Plumbing;
+			path = SwiftySockets/Plumbing;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -157,7 +130,6 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				770A96B11D53EE2500F35198 /* SwiftySockets_iOS.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -165,7 +137,6 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				770A96C21D53EE4300F35198 /* SwiftySockets_macOS.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -173,7 +144,6 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				770A96CF1D53EE8C00F35198 /* SwiftySockets_watchOS.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -181,7 +151,6 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				770A96DC1D53EEA000F35198 /* SwiftySockets_tvOS.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -494,7 +463,7 @@
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				INFOPLIST_FILE = SwiftySockets_iOS/Info.plist;
+				INFOPLIST_FILE = SwiftySockets/Plumbing/Info_iOS.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
@@ -518,7 +487,7 @@
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				INFOPLIST_FILE = SwiftySockets_iOS/Info.plist;
+				INFOPLIST_FILE = SwiftySockets/Plumbing/Info_iOS.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
@@ -544,7 +513,7 @@
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				FRAMEWORK_VERSION = A;
-				INFOPLIST_FILE = SwiftySockets_macOS/Info.plist;
+				INFOPLIST_FILE = SwiftySockets/Plumbing/Info_macOS.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "net.mike-ferenduros.SwiftySockets-macOS";
@@ -566,7 +535,7 @@
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				FRAMEWORK_VERSION = A;
-				INFOPLIST_FILE = SwiftySockets_macOS/Info.plist;
+				INFOPLIST_FILE = SwiftySockets/Plumbing/Info_macOS.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "net.mike-ferenduros.SwiftySockets-macOS";
@@ -586,7 +555,7 @@
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				INFOPLIST_FILE = SwiftySockets_watchOS/Info.plist;
+				INFOPLIST_FILE = SwiftySockets/Plumbing/Info_watchOS.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "net.mike-ferenduros.SwiftySockets-watchOS";
@@ -609,7 +578,7 @@
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				INFOPLIST_FILE = SwiftySockets_watchOS/Info.plist;
+				INFOPLIST_FILE = SwiftySockets/Plumbing/Info_watchOS.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "net.mike-ferenduros.SwiftySockets-watchOS";
@@ -633,7 +602,7 @@
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				INFOPLIST_FILE = SwiftySockets_tvOS/Info.plist;
+				INFOPLIST_FILE = SwiftySockets/Plumbing/Info_tvOS.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "net.mike-ferenduros.SwiftySockets-tvOS";
@@ -656,7 +625,7 @@
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				INFOPLIST_FILE = SwiftySockets_tvOS/Info.plist;
+				INFOPLIST_FILE = SwiftySockets/Plumbing/Info_tvOS.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "net.mike-ferenduros.SwiftySockets-tvOS";
@@ -689,6 +658,7 @@
 				770A96B41D53EE2500F35198 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		770A96C31D53EE4300F35198 /* Build configuration list for PBXNativeTarget "SwiftySockets_macOS" */ = {
 			isa = XCConfigurationList;
@@ -697,6 +667,7 @@
 				770A96C51D53EE4300F35198 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		770A96D01D53EE8D00F35198 /* Build configuration list for PBXNativeTarget "SwiftySockets_watchOS" */ = {
 			isa = XCConfigurationList;
@@ -705,6 +676,7 @@
 				770A96D21D53EE8D00F35198 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		770A96DD1D53EEA000F35198 /* Build configuration list for PBXNativeTarget "SwiftySockets_tvOS" */ = {
 			isa = XCConfigurationList;
@@ -713,6 +685,7 @@
 				770A96DF1D53EEA000F35198 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
