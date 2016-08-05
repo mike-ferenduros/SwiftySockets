@@ -30,10 +30,10 @@
 		770A96771D53E0EB00F35198 /* sockaddr_in6.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = sockaddr_in6.swift; sourceTree = "<group>"; };
 		770A96781D53E0EB00F35198 /* Socket6.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Socket6.swift; sourceTree = "<group>"; };
 		770A96791D53E0EB00F35198 /* StreamSocket.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StreamSocket.swift; sourceTree = "<group>"; };
-		770A96AD1D53EE2500F35198 /* SwiftySockets.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = SwiftySockets.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		770A96BE1D53EE4300F35198 /* SwiftySockets.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = SwiftySockets.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		770A96CB1D53EE8C00F35198 /* SwiftySockets.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = SwiftySockets.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		770A96D81D53EE9F00F35198 /* SwiftySockets.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = SwiftySockets.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		770A96AD1D53EE2500F35198 /* SwiftySockets_iOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = SwiftySockets_iOS.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		770A96BE1D53EE4300F35198 /* SwiftySockets_macOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = SwiftySockets_macOS.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		770A96CB1D53EE8C00F35198 /* SwiftySockets_watchOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = SwiftySockets_watchOS.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		770A96D81D53EE9F00F35198 /* SwiftySockets_tvOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = SwiftySockets_tvOS.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		77ACDFB41D540E05000349B1 /* Info_iOS.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info_iOS.plist; sourceTree = "<group>"; };
 		77ACDFB51D540E05000349B1 /* Info_macOS.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info_macOS.plist; sourceTree = "<group>"; };
 		77ACDFB61D540E05000349B1 /* Info_tvOS.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info_tvOS.plist; sourceTree = "<group>"; };
@@ -88,10 +88,10 @@
 		770A965D1D53E0C200F35198 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				770A96AD1D53EE2500F35198 /* SwiftySockets.framework */,
-				770A96BE1D53EE4300F35198 /* SwiftySockets.framework */,
-				770A96CB1D53EE8C00F35198 /* SwiftySockets.framework */,
-				770A96D81D53EE9F00F35198 /* SwiftySockets.framework */,
+				770A96AD1D53EE2500F35198 /* SwiftySockets_iOS.framework */,
+				770A96BE1D53EE4300F35198 /* SwiftySockets_macOS.framework */,
+				770A96CB1D53EE8C00F35198 /* SwiftySockets_watchOS.framework */,
+				770A96D81D53EE9F00F35198 /* SwiftySockets_tvOS.framework */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -172,7 +172,7 @@
 			);
 			name = SwiftySockets_iOS;
 			productName = SwiftySockets_iOS;
-			productReference = 770A96AD1D53EE2500F35198 /* SwiftySockets.framework */;
+			productReference = 770A96AD1D53EE2500F35198 /* SwiftySockets_iOS.framework */;
 			productType = "com.apple.product-type.framework";
 		};
 		770A96BD1D53EE4300F35198 /* SwiftySockets_macOS */ = {
@@ -190,7 +190,7 @@
 			);
 			name = SwiftySockets_macOS;
 			productName = SwiftySockets_macOS;
-			productReference = 770A96BE1D53EE4300F35198 /* SwiftySockets.framework */;
+			productReference = 770A96BE1D53EE4300F35198 /* SwiftySockets_macOS.framework */;
 			productType = "com.apple.product-type.framework";
 		};
 		770A96CA1D53EE8C00F35198 /* SwiftySockets_watchOS */ = {
@@ -208,7 +208,7 @@
 			);
 			name = SwiftySockets_watchOS;
 			productName = SwiftySockets_watchOS;
-			productReference = 770A96CB1D53EE8C00F35198 /* SwiftySockets.framework */;
+			productReference = 770A96CB1D53EE8C00F35198 /* SwiftySockets_watchOS.framework */;
 			productType = "com.apple.product-type.framework";
 		};
 		770A96D71D53EE9F00F35198 /* SwiftySockets_tvOS */ = {
@@ -226,7 +226,7 @@
 			);
 			name = SwiftySockets_tvOS;
 			productName = SwiftySockets_tvOS;
-			productReference = 770A96D81D53EE9F00F35198 /* SwiftySockets.framework */;
+			productReference = 770A96D81D53EE9F00F35198 /* SwiftySockets_tvOS.framework */;
 			productType = "com.apple.product-type.framework";
 		};
 /* End PBXNativeTarget section */
@@ -468,7 +468,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "net.mike-ferenduros.SwiftySockets-iOS";
-				PRODUCT_NAME = SwiftySockets;
+				PRODUCT_NAME = SwiftySockets_iOS;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 3.0;
@@ -492,7 +492,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "net.mike-ferenduros.SwiftySockets-iOS";
-				PRODUCT_NAME = SwiftySockets;
+				PRODUCT_NAME = SwiftySockets_iOS;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 3.0;
@@ -517,7 +517,7 @@
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "net.mike-ferenduros.SwiftySockets-macOS";
-				PRODUCT_NAME = SwiftySockets;
+				PRODUCT_NAME = SwiftySockets_macOS;
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 3.0;
 			};
@@ -539,7 +539,7 @@
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "net.mike-ferenduros.SwiftySockets-macOS";
-				PRODUCT_NAME = SwiftySockets;
+				PRODUCT_NAME = SwiftySockets_macOS;
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 3.0;
 			};
@@ -559,7 +559,7 @@
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "net.mike-ferenduros.SwiftySockets-watchOS";
-				PRODUCT_NAME = SwiftySockets;
+				PRODUCT_NAME = SwiftySockets_watchOS;
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 3.0;
@@ -582,7 +582,7 @@
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "net.mike-ferenduros.SwiftySockets-watchOS";
-				PRODUCT_NAME = SwiftySockets;
+				PRODUCT_NAME = SwiftySockets_watchOS;
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 3.0;
@@ -606,7 +606,7 @@
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "net.mike-ferenduros.SwiftySockets-tvOS";
-				PRODUCT_NAME = SwiftySockets;
+				PRODUCT_NAME = SwiftySockets_tvOS;
 				SDKROOT = appletvos;
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 3.0;
@@ -629,7 +629,7 @@
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "net.mike-ferenduros.SwiftySockets-tvOS";
-				PRODUCT_NAME = SwiftySockets;
+				PRODUCT_NAME = SwiftySockets_tvOS;
 				SDKROOT = appletvos;
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 3.0;
