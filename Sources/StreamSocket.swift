@@ -45,7 +45,7 @@ public class StreamSocket : NSObject, StreamDelegate {
         }
     }
 
-    public static func connect(to address: sockaddr_in6, completion: (StreamSocket?,NSError?)->()) {
+    public static func connect(to address: sockaddr_in6, completion: (StreamSocket?,Error?)->()) {
 
         let sock = Socket6(type: SOCK_STREAM)
 
@@ -55,7 +55,7 @@ public class StreamSocket : NSObject, StreamDelegate {
                 DispatchQueue.main.async {
                     completion(StreamSocket(socket: sock), nil)
                 }
-            } catch let err as NSError {
+            } catch let err {
                 DispatchQueue.main.async {
                     try? sock.close()
                     completion(nil, err)

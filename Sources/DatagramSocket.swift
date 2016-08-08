@@ -97,10 +97,9 @@ public class DatagramSocket {
                 } else {
                     _ = try socket.send(buffer: item.data, flags: MSG_DONTWAIT)
                 }
-            } catch let err as NSError {
-
-                if [EWOULDBLOCK,EAGAIN].contains(Int32(err.code)) { return }
-            }
+            } catch POSIXError.again {
+                return
+            } catch {}
 
             _ = sendQueue.removeFirst()
         }
