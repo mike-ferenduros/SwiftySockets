@@ -9,7 +9,7 @@
 import Foundation
 
 
-struct POSIXError : Error, Equatable {
+struct POSIXError : Error, Equatable, CustomStringConvertible, CustomDebugStringConvertible {
 
     static let domain = "net.mike-ferenduros.SwiftySockets.POSIXError"
     let _domain = POSIXError.domain
@@ -18,7 +18,7 @@ struct POSIXError : Error, Equatable {
     var description: String {
         return String(cString: strerror(Int32(_code)))
     }
-    
+
     var debugDescription: String {
         return "POSIXError(\(_code)): \(description)"
     }

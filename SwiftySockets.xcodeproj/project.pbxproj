@@ -42,10 +42,6 @@
 		77ACDFB51D540E05000349B1 /* Info_macOS.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info_macOS.plist; sourceTree = "<group>"; };
 		77ACDFB61D540E05000349B1 /* Info_tvOS.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info_tvOS.plist; sourceTree = "<group>"; };
 		77ACDFB71D540E05000349B1 /* Info_watchOS.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info_watchOS.plist; sourceTree = "<group>"; };
-		77ACDFB81D540E05000349B1 /* SwiftySockets_iOS.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SwiftySockets_iOS.h; sourceTree = "<group>"; };
-		77ACDFB91D540E05000349B1 /* SwiftySockets_macOS.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SwiftySockets_macOS.h; sourceTree = "<group>"; };
-		77ACDFBA1D540E05000349B1 /* SwiftySockets_tvOS.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SwiftySockets_tvOS.h; sourceTree = "<group>"; };
-		77ACDFBB1D540E05000349B1 /* SwiftySockets_watchOS.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SwiftySockets_watchOS.h; sourceTree = "<group>"; };
 		77ACDFF51D5880D8000349B1 /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Package.swift; sourceTree = "<group>"; };
 		77ACDFF61D588A53000349B1 /* POSIXError.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = POSIXError.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -87,7 +83,7 @@
 			children = (
 				77ACDFF51D5880D8000349B1 /* Package.swift */,
 				770A965E1D53E0C200F35198 /* Sources */,
-				77ACDFB31D540E05000349B1 /* Plumbing */,
+				77ACDFB31D540E05000349B1 /* Metadata */,
 				770A965D1D53E0C200F35198 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -115,19 +111,15 @@
 			path = Sources;
 			sourceTree = "<group>";
 		};
-		77ACDFB31D540E05000349B1 /* Plumbing */ = {
+		77ACDFB31D540E05000349B1 /* Metadata */ = {
 			isa = PBXGroup;
 			children = (
 				77ACDFB41D540E05000349B1 /* Info_iOS.plist */,
 				77ACDFB51D540E05000349B1 /* Info_macOS.plist */,
 				77ACDFB61D540E05000349B1 /* Info_tvOS.plist */,
 				77ACDFB71D540E05000349B1 /* Info_watchOS.plist */,
-				77ACDFB81D540E05000349B1 /* SwiftySockets_iOS.h */,
-				77ACDFB91D540E05000349B1 /* SwiftySockets_macOS.h */,
-				77ACDFBA1D540E05000349B1 /* SwiftySockets_tvOS.h */,
-				77ACDFBB1D540E05000349B1 /* SwiftySockets_watchOS.h */,
 			);
-			path = Plumbing;
+			path = Metadata;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -278,8 +270,8 @@
 			targets = (
 				770A96AC1D53EE2500F35198 /* SwiftySockets_iOS */,
 				770A96BD1D53EE4300F35198 /* SwiftySockets_macOS */,
-				770A96CA1D53EE8C00F35198 /* SwiftySockets_watchOS */,
 				770A96D71D53EE9F00F35198 /* SwiftySockets_tvOS */,
+				770A96CA1D53EE8C00F35198 /* SwiftySockets_watchOS */,
 			);
 		};
 /* End PBXProject section */
@@ -474,7 +466,7 @@
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				INFOPLIST_FILE = "$(SRCROOT)/Plumbing/Info_iOS.plist";
+				INFOPLIST_FILE = "$(SRCROOT)/Metadata/Info_iOS.plist";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
@@ -498,7 +490,7 @@
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				INFOPLIST_FILE = "$(SRCROOT)/Plumbing/Info_iOS.plist";
+				INFOPLIST_FILE = "$(SRCROOT)/Metadata/Info_iOS.plist";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
@@ -524,7 +516,7 @@
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				FRAMEWORK_VERSION = A;
-				INFOPLIST_FILE = "$(SRCROOT)/Plumbing/Info_macOS.plist";
+				INFOPLIST_FILE = "$(SRCROOT)/Metadata/Info_macOS.plist";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "net.mike-ferenduros.SwiftySockets-macOS";
@@ -546,7 +538,7 @@
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				FRAMEWORK_VERSION = A;
-				INFOPLIST_FILE = "$(SRCROOT)/Plumbing/Info_macOS.plist";
+				INFOPLIST_FILE = "$(SRCROOT)/Metadata/Info_macOS.plist";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "net.mike-ferenduros.SwiftySockets-macOS";
@@ -566,7 +558,7 @@
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				INFOPLIST_FILE = "$(SRCROOT)/Plumbing/Info_watchOS.plist";
+				INFOPLIST_FILE = "$(SRCROOT)/Metadata/Info_watchOS.plist";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "net.mike-ferenduros.SwiftySockets-watchOS";
@@ -589,7 +581,7 @@
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				INFOPLIST_FILE = "$(SRCROOT)/Plumbing/Info_watchOS.plist";
+				INFOPLIST_FILE = "$(SRCROOT)/Metadata/Info_watchOS.plist";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "net.mike-ferenduros.SwiftySockets-watchOS";
@@ -613,7 +605,7 @@
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				INFOPLIST_FILE = "$(SRCROOT)/Plumbing/Info_tvOS.plist";
+				INFOPLIST_FILE = "$(SRCROOT)/Metadata/Info_tvOS.plist";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "net.mike-ferenduros.SwiftySockets-tvOS";
@@ -636,7 +628,7 @@
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				INFOPLIST_FILE = "$(SRCROOT)/Plumbing/Info_tvOS.plist";
+				INFOPLIST_FILE = "$(SRCROOT)/Metadata/Info_tvOS.plist";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "net.mike-ferenduros.SwiftySockets-tvOS";
