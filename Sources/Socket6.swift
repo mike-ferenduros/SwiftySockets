@@ -31,7 +31,7 @@ public struct Socket6 {
     private func check(_ result: Int) throws { try check(Int32(result)) }
     private func check(_ result: Int32) throws {
         guard result >= 0 else {
-            throw POSIXError(rawValue: errno) ?? POSIXError.unknown
+            throw POSIXError(errno)
         }
     }
 

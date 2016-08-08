@@ -97,9 +97,10 @@ public class DatagramSocket {
                 } else {
                     _ = try socket.send(buffer: item.data, flags: MSG_DONTWAIT)
                 }
-            } catch POSIXError.again {
-                return
-            } catch {}
+            }
+            catch POSIXError(EAGAIN) { return }
+            catch POSIXError(EWOULDBLOCK) { return }
+            catch {}
 
             _ = sendQueue.removeFirst()
         }
