@@ -12,7 +12,11 @@ import Foundation
 //When strict typing meets a crufty API...
 
 ///Extension to reduce the pain of working with sockaddr_in6
-extension sockaddr_in6 {
+extension sockaddr_in6 : CustomDebugStringConvertible {
+
+    public var debugDescription: String {
+        return valid ? "sockaddr_in6(\(ip), \(self.port))" : "sockaddr_in6 (INVALID)"
+    }
 
     ///Port number, reflecting sin6_port
     public var port: UInt16 {
@@ -92,23 +96,23 @@ extension sockaddr_in6 {
     }
 
     /**
-        Initialise from sockaddr structure
-        Can handle either sockaddr_in or sockaddr_in6 pointees; returns nil otherwise
-        NB: sockaddr is actually smaller than sockaddr_in6, which is why we have to support this
-        pass-by-pointers crap.
+        Initialise from addrinfo
+        Can handle either sockaddr_in or sockaddr_in6 pointees; returns nil otherwise.
     */
-    public init?(sockaddr sa: UnsafePointer<sockaddr>) {
-        if Int32(sa.pointee.sa_family) == AF_INET6 {
-            guard Int(sa.pointee.sa_len) == sizeof(sockaddr_in6.self) else { return nil }
-            self.init()
-            memcpy(&self, sa, sizeof(sockaddr_in6.self))
-        } else if Int32(sa.pointee.sa_family) == AF_INET {
-            guard Int(sa.pointee.sa_len) == sizeof(sockaddr_in.self) else { return nil }
-            var sa4 = sockaddr_in()
-            memcpy(&sa4, sa, sizeof(sockaddr_in.self))
-            self.init(sa: sa4)
-        } else {
-            return nil
+    public init?(ai: addrinfo) {
+        switch ai.ai_family {
+            case AF_INET6:
+                guard Int(ai.ai_addrlen) == sizeof(sockaddr_in6.self) else { return nil }
+                guard let sa6 = UnsafePointer<sockaddr_in6>(ai.ai_addr) else { return nil }
+                self.init(ip: sa6.pointee.ip, port: sa6.pointee.port)
+
+            case AF_INET:
+                guard Int(ai.ai_addrlen) == sizeof(sockaddr_in.self) else { return nil }
+                guard let sa4 = UnsafePointer<sockaddr_in>(ai.ai_addr) else { return nil }
+                self.init(sa: sa4.pointee)
+            
+            default:
+                return nil
         }
     }
 
@@ -151,26 +155,30 @@ extension sockaddr_in6 {
         Invoke getaddrinfo to lookup IPv6 addresses for a hostname, on a global queue.
         Invokes completion on main queue with results, or [] if an error occurred
     */
-    public static func getaddrinfo(hostname: String, port: UInt16, completion: ([sockaddr_in6])->()) {
+    public static func getaddrinfo(hostname: String, port: UInt16, completion: ([sockaddr_in6], POSIXError?)->()) {
         DispatchQueue.global().async {
             let cstr = hostname.cString(using: .utf8)
             let port = "\(port)".cString(using: .utf8)
             var addresses: UnsafeMutablePointer<addrinfo>?
             var hint = addrinfo(ai_flags: 0, ai_family: AF_INET6, ai_socktype: 0, ai_protocol: 0, ai_addrlen: 0, ai_canonname: nil, ai_addr: nil, ai_next: nil)
             var results: [sockaddr_in6] = []
-            if sock_getaddrinfo(cstr, port, &hint, &addresses) == 0 {
 
-                if let addresses = addresses { defer { freeaddrinfo(addresses) } }
-
-                var curr = addresses
-                while let info = curr?.pointee {
-                    if let sa = sockaddr_in6(sockaddr: info.ai_addr) {
-                        results.append(sa)
-                    }
-                    curr = info.ai_next
-                }
+            guard sock_getaddrinfo(cstr, port, &hint, &addresses) == 0  else {
+                let error = POSIXError(errno)
+                return DispatchQueue.main.async { completion([], error) }
             }
-            DispatchQueue.main.async { completion(results) }
+
+            var curr = addresses
+            while let info = curr?.pointee {
+                if let sa = sockaddr_in6(ai: info) {
+                    results.append(sa)
+                }
+                curr = info.ai_next
+            }
+
+            freeaddrinfo(addresses)
+
+            DispatchQueue.main.async { completion(results, nil) }
         }
     }
 }
