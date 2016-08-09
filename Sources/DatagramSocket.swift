@@ -16,6 +16,9 @@ public protocol DatagramSocketDelegate: class {
 
 
 
+/**
+    Buffered, async UDP.
+*/
 public class DatagramSocket {
 
     public var maxReadSize = 1500

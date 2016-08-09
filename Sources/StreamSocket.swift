@@ -9,6 +9,10 @@
 import Foundation
 
 
+/**
+    Buffered, async TCP with SSL support.
+    Requires a running RunLoop.main to function.
+*/
 public class StreamSocket : NSObject, StreamDelegate {
 
     public let socket: Socket6
