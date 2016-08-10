@@ -11,11 +11,34 @@ import Foundation
 
 //When strict typing meets a crufty API...
 
+extension in6_addr : CustomStringConvertible {
+    public var description: String {
+        var str = [CChar](repeating: 0, count: Int(INET6_ADDRSTRLEN))
+        var mself = self
+        inet_ntop(AF_INET6, &mself, &str, socklen_t(str.count))
+        return String(cString: str)
+    }
+
+    var bytes: [UInt8] {
+        get {
+            var result = [UInt8](repeating: 0, count: 16)
+            var mself = self
+            memcpy(&result, &mself, 16)
+            return result
+        }
+        set {
+            guard newValue.count == 16 else { fatalError() }
+            memcpy(&self, newValue, 16)
+        }
+    }
+}
+
+
 ///Extension to reduce the pain of working with sockaddr_in6
 extension sockaddr_in6 : CustomDebugStringConvertible {
 
     public var debugDescription: String {
-        return valid ? "sockaddr_in6(\(ip), \(self.port))" : "sockaddr_in6 (INVALID)"
+        return "\(sin6_addr) / \(self.port))"
     }
 
     ///Port number, reflecting sin6_port
@@ -32,20 +55,15 @@ extension sockaddr_in6 : CustomDebugStringConvertible {
     */
     public var ip: [UInt8] {
         get {
-            var src = sin6_addr.__u6_addr.__u6_addr8
-            var result = [UInt8](repeatElement(0, count: 16))
-            memcpy(&result, &src, 16)
-            return result
+            return self.sin6_addr.bytes
         }
 
         set {
-            var bytes: [UInt8]
             switch newValue.count {
-                case 4:     bytes = [0,0,0,0,0,0,0,0,0,0,0xFF,0xFF] + newValue
-                case 16:    bytes = newValue
+                case 4:     self.sin6_addr.bytes = [0,0,0,0,0,0,0,0,0,0,0xFF,0xFF] + newValue
+                case 16:    self.sin6_addr.bytes = newValue
                 default:    fatalError()
             }
-            memcpy(&sin6_addr.__u6_addr.__u6_addr8, bytes, 16)
         }
     }
 
