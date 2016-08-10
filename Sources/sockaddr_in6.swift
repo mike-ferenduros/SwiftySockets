@@ -94,6 +94,29 @@ extension sockaddr_in6 : CustomDebugStringConvertible {
         let ip = (0..<4).map { UInt8((ip4 >> ($0*8)) & 0xFF) }
         self.init(ip: ip, port: sa.sin_port.bigEndian)
     }
+    
+
+    /**
+        Initialise from a data containing either an IPv4 or IPv6 sockaddr
+    */
+    public init?(data: Data) {
+        let family = data.withUnsafeBytes { (sa: UnsafePointer<sockaddr>) -> Int32 in Int32(sa.pointee.sa_family) }
+
+        switch family {
+            case AF_INET:
+                guard data.count >= sizeof(sockaddr_in.self) else { return nil }
+                let sa4 = data.withUnsafeBytes { (sa: UnsafePointer<sockaddr_in>) -> sockaddr_in in sa.pointee }
+                self.init(sa: sa4)
+
+            case AF_INET6:
+                guard data.count >= sizeof(sockaddr_in6.self) else { return nil }
+                self.init()
+                self = data.withUnsafeBytes { (sa: UnsafePointer<sockaddr_in6>) -> sockaddr_in6 in sa.pointee }
+            
+            default:
+                return nil
+        }
+    }
 
     /**
         Initialise from addrinfo
