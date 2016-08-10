@@ -39,12 +39,11 @@ extension sockaddr_in6 : CustomDebugStringConvertible {
         }
 
         set {
-            var bytes = newValue
-            if bytes.count == 4 {
-                bytes = [0,0,0,0,0,0,0,0,0,0,0xFF,0xFF] + bytes
-            } else if bytes.count != 16 {
-                //A bit extreme maybe...
-                fatalError()
+            var bytes: [UInt8]
+            switch newValue.count {
+                case 4:     bytes = [0,0,0,0,0,0,0,0,0,0,0xFF,0xFF] + newValue
+                case 16:    bytes = newValue
+                default:    fatalError()
             }
             memcpy(&sin6_addr.__u6_addr.__u6_addr8, bytes, 16)
         }
