@@ -19,6 +19,23 @@ extension in6_addr : CustomStringConvertible {
         return String(cString: str)
     }
 
+    static let any = in6_addr(bytes: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])
+    static let loopback = in6_addr(bytes: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1])
+
+    /**
+        Initialise with either 4- or 16-byte address
+        4-byte addresses are converted to IPv6 representation
+    */
+    init(bytes: [UInt8]) {
+        self.init()
+        self.bytes = bytes
+    }
+
+    /**
+        Always reads as array of 16 bytes
+        May be written as array of either 4 or 16 bytes
+        4-byte addresses are converted to IPv6 representation
+    */
     var bytes: [UInt8] {
         get {
             var result = [UInt8](repeating: 0, count: 16)
@@ -27,8 +44,11 @@ extension in6_addr : CustomStringConvertible {
             return result
         }
         set {
-            guard newValue.count == 16 else { fatalError() }
-            memcpy(&self, newValue, 16)
+            switch newValue.count {
+                case 4:     memcpy(&self, [0,0,0,0,0,0,0,0,0,0,0xFF,0xFF] + newValue, 16)
+                case 16:    memcpy(&self, newValue, 16)
+                default:    fatalError()
+            }
         }
     }
 }
@@ -38,7 +58,7 @@ extension in6_addr : CustomStringConvertible {
 extension sockaddr_in6 : CustomDebugStringConvertible {
 
     public var debugDescription: String {
-        return "\(sin6_addr) / \(self.port))"
+        return "\(sin6_addr) / \(self.port)"
     }
 
     ///Port number, reflecting sin6_port
@@ -47,38 +67,18 @@ extension sockaddr_in6 : CustomDebugStringConvertible {
         set { sin6_port = newValue.bigEndian }
     }
 
-    /** 
-        IP address, reflecting sin6_addr.
-        Always reads as array of 16 bytes
-        May be written as array of either 4 or 16 bytes
-        4-byte addresses are converted to IPv6 representation
-    */
-    public var ip: [UInt8] {
-        get {
-            return self.sin6_addr.bytes
-        }
-
-        set {
-            switch newValue.count {
-                case 4:     self.sin6_addr.bytes = [0,0,0,0,0,0,0,0,0,0,0xFF,0xFF] + newValue
-                case 16:    self.sin6_addr.bytes = newValue
-                default:    fatalError()
-            }
-        }
-    }
-
     public var valid: Bool {
         return (Int32(sin6_family) == AF_INET6) && (Int(sin6_len) == sizeof(sockaddr_in6.self))
     }
 
     ///Wildcard address, optionally with port
     public static func any(port: UInt16 = 0) -> sockaddr_in6 {
-        return sockaddr_in6(ip: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], port: port)
+        return sockaddr_in6(addr: in6_addr.any, port: port)
     }
 
     ///Loopback address, optionally with port
     public static func loopback(port: UInt16 = 0) -> sockaddr_in6 {
-        return sockaddr_in6(ip: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1], port: port)
+        return sockaddr_in6(addr: in6_addr.loopback, port: port)
     }
 
     ///Initialise with zero (=wildcard) address.
@@ -93,13 +93,9 @@ extension sockaddr_in6 : CustomDebugStringConvertible {
         )
     }
 
-    /**
-        Initialise with either 4- or 16-byte address, plus port number
-        4-byte addresses are converted to IPv6 representation
-    */
-    public init(ip: [UInt8], port: UInt16) {
+    public init(addr: in6_addr, port: UInt16) {
         self.init()
-        self.ip = ip
+        self.sin6_addr = addr
         self.port = port
     }
 
@@ -109,9 +105,10 @@ extension sockaddr_in6 : CustomDebugStringConvertible {
     public init(sa: sockaddr_in) {
         let ip4 = sa.sin_addr.s_addr.bigEndian
         let ip = (0..<4).map { UInt8((ip4 >> (24 - $0*8)) & 0xFF) }
-        self.init(ip: ip, port: sa.sin_port.bigEndian)
+        let addr = in6_addr(bytes: ip)
+        self.init(addr: addr, port: sa.sin_port.bigEndian)
     }
-    
+
 
     /**
         Initialise from a data containing either an IPv4 or IPv6 sockaddr
@@ -144,7 +141,7 @@ extension sockaddr_in6 : CustomDebugStringConvertible {
             case AF_INET6:
                 guard Int(ai.ai_addrlen) == sizeof(sockaddr_in6.self) else { return nil }
                 guard let sa6 = UnsafePointer<sockaddr_in6>(ai.ai_addr) else { return nil }
-                self.init(ip: sa6.pointee.ip, port: sa6.pointee.port)
+                self.init(addr: sa6.pointee.sin6_addr, port: sa6.pointee.port)
 
             case AF_INET:
                 guard Int(ai.ai_addrlen) == sizeof(sockaddr_in.self) else { return nil }
