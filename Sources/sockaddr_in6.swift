@@ -31,6 +31,12 @@ extension in6_addr : CustomStringConvertible {
         self.bytes = bytes
     }
 
+    init(in4: in_addr) {
+        self.init()
+        let ip4 = in4.s_addr.bigEndian
+        self.bytes = (0..<4).map { UInt8((ip4 >> (24 - $0*8)) & 0xFF) }
+    }
+
     /**
         Always reads as array of 16 bytes
         May be written as array of either 4 or 16 bytes
@@ -88,7 +94,7 @@ extension sockaddr_in6 : CustomDebugStringConvertible {
             sin6_family: sa_family_t(AF_INET6),
             sin6_port: 0,
             sin6_flowinfo: 0,
-            sin6_addr: in6_addr(),
+            sin6_addr: in6_addr.any,
             sin6_scope_id: 0
         )
     }
@@ -103,9 +109,7 @@ extension sockaddr_in6 : CustomDebugStringConvertible {
         Initialise from IPv4 sockaddr structure, converting address to IPv6 representation
     */
     public init(sa: sockaddr_in) {
-        let ip4 = sa.sin_addr.s_addr.bigEndian
-        let ip = (0..<4).map { UInt8((ip4 >> (24 - $0*8)) & 0xFF) }
-        let addr = in6_addr(bytes: ip)
+        let addr = in6_addr(in4: sa.sin_addr)
         self.init(addr: addr, port: sa.sin_port.bigEndian)
     }
 
