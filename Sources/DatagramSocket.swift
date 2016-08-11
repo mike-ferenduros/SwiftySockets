@@ -31,18 +31,17 @@ public class DatagramSocket {
 
     private let readSource: DispatchSourceRead
     private let writeSource: DispatchSourceWrite
-    private let queue = DispatchQueue(label: "DatagramSocket")
 
 
     private init(socket: Socket6, delegate: DatagramSocketDelegate? = nil) {
         self.socket = Socket6(type: SOCK_DGRAM)
 
-        readSource = DispatchSource.makeReadSource(fileDescriptor: socket.fd, queue: queue)
-        writeSource = DispatchSource.makeWriteSource(fileDescriptor: socket.fd, queue: queue)
+        readSource = DispatchSource.makeReadSource(fileDescriptor: socket.fd, queue: DispatchQueue.main)
+        writeSource = DispatchSource.makeWriteSource(fileDescriptor: socket.fd, queue: DispatchQueue.main)
         readSource.setEventHandler { [weak self] in self?.readDatagrams() }
         writeSource.setEventHandler { [weak self] in self?.writeQueued() }
-        readSource.resume()
-        writeSource.resume()
+        readSource.activate()
+        writeSource.activate()
     }
 
     public convenience init(boundTo address: sockaddr_in6, delegate: DatagramSocketDelegate? = nil) throws {
@@ -72,24 +71,18 @@ public class DatagramSocket {
 
 
 
-    //Only invoked on self.queue.
     private func readDatagrams() {
         guard isOpen else { return }
 
         while let (data,sender) = try? socket.recvfrom(length: self.maxReadSize, flags: MSG_DONTWAIT) {
-
-            DispatchQueue.main.async {
-                self.delegate?.datagramSocket(self, didReceive: data, from: sender)
-            }
+            self.delegate?.datagramSocket(self, didReceive: data, from: sender)
         }
     }
 
 
 
-    //Only accessed on self.queue
     private var sendQueue: [(data:Data,addr:sockaddr_in6?)] = []
 
-    //Only invoked on self.queue
     private func writeQueued() {
         guard isOpen else { return }
         while let item = sendQueue.first {
@@ -110,9 +103,7 @@ public class DatagramSocket {
     }
 
     public func send(data: Data, to addr: sockaddr_in6?) {
-        queue.async { [weak self] in
-            self?.sendQueue.append((data: data, addr: addr))
-            self?.writeQueued()
-        }
+        sendQueue.append((data: data, addr: addr))
+        writeQueued()
     }
 }
