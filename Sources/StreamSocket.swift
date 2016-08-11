@@ -186,10 +186,13 @@ extension StreamSocket {
 }
 
 
-class ListenSocket {
+public class ListenSocket {
 
     private(set) public var socket: Socket6?
     private var source: DispatchSourceRead?
+
+    public init() {
+    }
 
     public func listen(port: UInt16, accept: (Socket6)->()) throws {
         try listen(address: sockaddr_in6.any(port: port), accept: accept)
@@ -217,7 +220,7 @@ class ListenSocket {
         try socket?.listen(backlog: 10)
     }
 
-    func cancel() {
+    public func cancel() {
         source?.cancel()
         try? socket?.close()
         source = nil
