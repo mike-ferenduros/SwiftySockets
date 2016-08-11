@@ -10,15 +10,14 @@ import Foundation
 
 
 /**
-    Buffered, async TCP with SSL support.
-    Requires a running RunLoop.main to function.
+    Buffered, async TCP
 */
-public class StreamSocket : NSObject, StreamDelegate {
+public class StreamSocket {
 
     public let socket: Socket6
 
-    private let istream: InputStream
-    private let ostream: NSOutputStream
+    private let rstream: CFReadStream
+    private let wstream: CFWriteStream
     private var canRead = false
     private var canWrite = false
 
@@ -27,73 +26,63 @@ public class StreamSocket : NSObject, StreamDelegate {
     public init(socket: Socket6) {
         self.socket = socket
 
-        var cfistream: Unmanaged<CFReadStream>?
-        var cfostream: Unmanaged<CFWriteStream>?
-        CFStreamCreatePairWithSocket(nil, self.socket.fd, &cfistream, &cfostream)
+        var urstream: Unmanaged<CFReadStream>?
+        var uwstream: Unmanaged<CFWriteStream>?
+        CFStreamCreatePairWithSocket(nil, self.socket.fd, &urstream, &uwstream)
+        rstream = urstream!.takeRetainedValue()
+        wstream = uwstream!.takeRetainedValue()
 
-        self.istream = cfistream!.takeRetainedValue()
-        self.ostream = cfostream!.takeRetainedValue()
+        let pself = Unmanaged.passUnretained(self).toOpaque()
+        var callbackContext = CFStreamClientContext(version: 0, info: pself, retain: nil, release: nil, copyDescription: nil)
 
-        super.init()
+        let rcallback: CFReadStreamClientCallBack = { _, event, info in
+            let iself = (Unmanaged.fromOpaque(info!) as Unmanaged<StreamSocket>).takeUnretainedValue()
+            iself.handle(event: event)
+        }
 
-        istream.delegate = self
-        ostream.delegate = self
+        let wcallback: CFWriteStreamClientCallBack = { _, event, info in
+            let iself = (Unmanaged.fromOpaque(info!) as Unmanaged<StreamSocket>).takeUnretainedValue()
+            iself.handle(event: event)
+        }
 
-        istream.schedule(in: RunLoop.current, forMode: RunLoopMode.commonModes)
-        ostream.schedule(in: RunLoop.current, forMode: RunLoopMode.commonModes)
+        let revents: CFStreamEventType = [.hasBytesAvailable, .errorOccurred, .endEncountered]
+        let wevents: CFStreamEventType = [.canAcceptBytes, .errorOccurred, .endEncountered]
+        CFReadStreamSetClient(rstream, revents.rawValue, rcallback, &callbackContext)
+        CFWriteStreamSetClient(wstream, wevents.rawValue, wcallback, &callbackContext)
 
-        istream.open()
-        ostream.open()
+        CFReadStreamSetDispatchQueue(rstream, DispatchQueue.main)
+        CFWriteStreamSetDispatchQueue(wstream, DispatchQueue.main)
+
+        CFReadStreamOpen(rstream)
+        CFWriteStreamOpen(wstream)
     }
 
-    public static func connect(to address: sockaddr_in6, completion: (StreamSocket?,Error?)->()) {
-
-        let sock = Socket6(type: SOCK_STREAM)
-
-        DispatchQueue.global().async {
-            do {
-                try sock.connect(to: address)
-                DispatchQueue.main.async {
-                    completion(StreamSocket(socket: sock), nil)
-                }
-            } catch let err {
-                DispatchQueue.main.async {
-                    try? sock.close()
-                    completion(nil, err)
-                }
-            }
+    private func handle(event: CFStreamEventType) {
+        if event.contains(.hasBytesAvailable) {
+            canRead = true
+            tryRead()
+        }
+        if event.contains(.canAcceptBytes) {
+            canWrite = true
+            tryWrite()
+        }
+        if event.contains(.endEncountered) || event.contains(.errorOccurred) {
+            close()
         }
     }
 
     deinit {
+        CFReadStreamSetClient(rstream, 0, nil, nil)
+        CFWriteStreamSetClient(wstream, 0, nil, nil)
         close()
     }
 
     public func close() {
         if isOpen {
-            istream.close()
-            ostream.close()
-            istream.delegate = nil
-            ostream.delegate = nil
+            CFReadStreamClose(rstream)
+            CFWriteStreamClose(wstream)
             try? socket.close()
             isOpen = false
-        }
-    }
-
-
-
-    public func stream(_ aStream: Stream, handle eventCode: Stream.Event) {
-        guard isOpen else { return }
-        if eventCode.contains(.hasBytesAvailable) {
-            canRead = true
-            tryRead()
-        }
-        if eventCode.contains(.hasSpaceAvailable) {
-            canWrite = true
-            tryWrite()
-        }
-        if eventCode.contains(.endEncountered) || eventCode.contains(.errorOccurred) {
-            close()
         }
     }
 
@@ -101,8 +90,8 @@ public class StreamSocket : NSObject, StreamDelegate {
     private var readQueue: [(min: Int, max: Int, completion:(Data?)->())] = []
     private var readBuffer: Data?
     private func tryRead() {
-        guard isOpen else { return }
-        guard let item = readQueue.first, canRead else { return }
+
+        guard isOpen, let item = readQueue.first, canRead else { return }
 
         var needed = item.min
         var wanted = item.max
@@ -113,7 +102,7 @@ public class StreamSocket : NSObject, StreamDelegate {
 
         var buf = Data(count: wanted)
         canRead = false
-        let bytesRead = buf.withUnsafeMutableBytes { return istream.read($0, maxLength: buf.count) }
+        let bytesRead = buf.withUnsafeMutableBytes { return CFReadStreamRead(rstream, $0, buf.count) }
         if bytesRead == 0 { return }
         if bytesRead < buf.count {
             buf = buf.subdata(in: 0..<bytesRead)
@@ -139,11 +128,11 @@ public class StreamSocket : NSObject, StreamDelegate {
     private var writeQueue: [Data] = []
 
     private func tryWrite() {
-        guard isOpen else { return }
-        guard let item = writeQueue.first, canWrite else { return }
+
+        guard isOpen, let item = writeQueue.first, canWrite else { return }
 
         canWrite = false
-        let bytesWritten = item.withUnsafeBytes { return ostream.write($0, maxLength: item.count) }
+        let bytesWritten = item.withUnsafeBytes { return CFWriteStreamWrite(wstream, $0, item.count) }
 
         if bytesWritten == item.count {
             _ = writeQueue.removeFirst()
@@ -153,7 +142,6 @@ public class StreamSocket : NSObject, StreamDelegate {
     }
 
     public func read(_ count: Int, completion: (Data?)->()) {
-        guard Thread.isMainThread else { fatalError() }
         readQueue.append((min: count, max: count, completion: completion))
         self.tryRead()
     }
@@ -175,16 +163,39 @@ public class StreamSocket : NSObject, StreamDelegate {
 }
 
 
+
+extension StreamSocket {
+    public static func connect(to address: sockaddr_in6, completion: (StreamSocket?,Error?)->()) {
+
+        let sock = Socket6(type: SOCK_STREAM)
+
+        DispatchQueue.global().async {
+            do {
+                try sock.connect(to: address)
+                DispatchQueue.main.async {
+                    completion(StreamSocket(socket: sock), nil)
+                }
+            } catch let err {
+                DispatchQueue.main.async {
+                    try? sock.close()
+                    completion(nil, err)
+                }
+            }
+        }
+    }
+}
+
+
 class ListenSocket {
 
-    private(set) var socket: Socket6?
+    private(set) public var socket: Socket6?
     private var source: DispatchSourceRead?
 
-    func listen(port: UInt16, accept: (Socket6)->()) throws {
+    public func listen(port: UInt16, accept: (Socket6)->()) throws {
         try listen(address: sockaddr_in6.any(port: port), accept: accept)
     }
 
-    func listen(address: sockaddr_in6, accept: (Socket6)->()) throws {
+    public func listen(address: sockaddr_in6, accept: (Socket6)->()) throws {
         if socket != nil || source != nil {
             cancel()
         }
