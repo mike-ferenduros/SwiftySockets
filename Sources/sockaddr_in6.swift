@@ -108,7 +108,7 @@ extension sockaddr_in6 : CustomDebugStringConvertible {
     */
     public init(sa: sockaddr_in) {
         let ip4 = sa.sin_addr.s_addr.bigEndian
-        let ip = (0..<4).map { UInt8((ip4 >> ($0*8)) & 0xFF) }
+        let ip = (0..<4).map { UInt8((ip4 >> (24 - $0*8)) & 0xFF) }
         self.init(ip: ip, port: sa.sin_port.bigEndian)
     }
     
