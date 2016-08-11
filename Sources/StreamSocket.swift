@@ -213,7 +213,7 @@ class ListenSocket {
             self?.source = nil
             self?.cancel()
         }
-        source?.activate()
+        source?.resume()
         try socket?.listen(backlog: 10)
     }
 
