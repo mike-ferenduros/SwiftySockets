@@ -11,12 +11,16 @@ import Foundation
 
 //When strict typing meets a crufty API...
 
-extension in6_addr : CustomStringConvertible {
+extension in6_addr : Equatable, CustomStringConvertible {
     public var description: String {
         var str = [CChar](repeating: 0, count: Int(INET6_ADDRSTRLEN))
         var mself = self
         inet_ntop(AF_INET6, &mself, &str, socklen_t(str.count))
         return String(cString: str)
+    }
+    
+    public static func ==(lhs: in6_addr, rhs: in6_addr) -> Bool {
+        return lhs.bytes == rhs.bytes
     }
 
     static let any = in6_addr(bytes: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])
@@ -61,16 +65,30 @@ extension in6_addr : CustomStringConvertible {
 
 
 ///Extension to reduce the pain of working with sockaddr_in6
-extension sockaddr_in6 : CustomDebugStringConvertible {
+extension sockaddr_in6 : Equatable, CustomDebugStringConvertible {
 
     public var debugDescription: String {
         return "\(sin6_addr) / \(self.port)"
+    }
+
+    public static func ==(lhs: sockaddr_in6, rhs: sockaddr_in6) -> Bool {
+        return lhs.sin6_addr == rhs.sin6_addr && lhs.sin6_port == rhs.sin6_port && lhs.scope_id == rhs.scope_id && lhs.flowinfo == rhs.flowinfo
     }
 
     ///Port number, reflecting sin6_port
     public var port: UInt16 {
         get { return sin6_port.bigEndian }
         set { sin6_port = newValue.bigEndian }
+    }
+
+    public var flowinfo: UInt32 {
+        get { return sin6_flowinfo.bigEndian }
+        set { sin6_flowinfo = newValue.bigEndian }
+    }
+
+    public var scope_id: UInt32 {
+        get { return sin6_scope_id.bigEndian }
+        set { sin6_scope_id = newValue.bigEndian }
     }
 
     public var valid: Bool {
@@ -144,8 +162,11 @@ extension sockaddr_in6 : CustomDebugStringConvertible {
         switch ai.ai_family {
             case AF_INET6:
                 guard Int(ai.ai_addrlen) == sizeof(sockaddr_in6.self) else { return nil }
+                self.init()
                 guard let sa6 = UnsafePointer<sockaddr_in6>(ai.ai_addr) else { return nil }
-                self.init(addr: sa6.pointee.sin6_addr, port: sa6.pointee.port)
+                self = sa6.pointee
+                self.sin6_family = sa_family_t(AF_INET6)
+                self.sin6_len = UInt8(sizeof(sockaddr_in6.self))
 
             case AF_INET:
                 guard Int(ai.ai_addrlen) == sizeof(sockaddr_in.self) else { return nil }
