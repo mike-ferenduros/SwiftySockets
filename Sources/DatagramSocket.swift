@@ -30,18 +30,12 @@ public class DatagramSocket {
 
 
     private let readSource: DispatchSourceRead
-    private let writeSource: DispatchSourceWrite
-
-
     private init(socket: Socket6, delegate: DatagramSocketDelegate? = nil) {
-        self.socket = Socket6(type: SOCK_DGRAM)
-
+        self.socket = socket
+        self.delegate = delegate
         readSource = DispatchSource.makeReadSource(fileDescriptor: socket.fd, queue: DispatchQueue.main)
-        writeSource = DispatchSource.makeWriteSource(fileDescriptor: socket.fd, queue: DispatchQueue.main)
         readSource.setEventHandler { [weak self] in self?.readDatagrams() }
-        writeSource.setEventHandler { [weak self] in self?.writeQueued() }
         readSource.resume()
-        writeSource.resume()
     }
 
     public convenience init(boundTo address: sockaddr_in6, delegate: DatagramSocketDelegate? = nil) throws {
@@ -61,7 +55,6 @@ public class DatagramSocket {
 
     public func close() {
         readSource.cancel()
-        writeSource.cancel()
         try? socket.close()
     }
 
@@ -81,29 +74,11 @@ public class DatagramSocket {
 
 
 
-    private var sendQueue: [(data:Data,addr:sockaddr_in6?)] = []
-
-    private func writeQueued() {
-        guard isOpen else { return }
-        while let item = sendQueue.first {
-
-            do {
-                if let addr = item.addr {
-                    _ = try socket.send(buffer: item.data, to: addr, flags: MSG_DONTWAIT)
-                } else {
-                    _ = try socket.send(buffer: item.data, flags: MSG_DONTWAIT)
-                }
-            }
-            catch POSIXError(EAGAIN) { return }
-            catch POSIXError(EWOULDBLOCK) { return }
-            catch {}
-
-            _ = sendQueue.removeFirst()
-        }
-    }
-
     public func send(data: Data, to addr: sockaddr_in6?) {
-        sendQueue.append((data: data, addr: addr))
-        writeQueued()
+        if let addr = addr {
+            _ = try? socket.send(buffer: data, to: addr, flags: MSG_DONTWAIT)
+        } else {
+            _ = try? socket.send(buffer: data, flags: MSG_DONTWAIT)
+        }
     }
 }
