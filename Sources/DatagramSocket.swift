@@ -40,8 +40,8 @@ public class DatagramSocket {
         writeSource = DispatchSource.makeWriteSource(fileDescriptor: socket.fd, queue: DispatchQueue.main)
         readSource.setEventHandler { [weak self] in self?.readDatagrams() }
         writeSource.setEventHandler { [weak self] in self?.writeQueued() }
-        readSource.activate()
-        writeSource.activate()
+        readSource.resume()
+        writeSource.resume()
     }
 
     public convenience init(boundTo address: sockaddr_in6, delegate: DatagramSocketDelegate? = nil) throws {
