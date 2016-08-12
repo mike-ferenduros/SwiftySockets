@@ -203,7 +203,6 @@ public class ListenSocket : CustomDebugStringConvertible {
 
     private(set) public var socket: Socket6?
     private var source: DispatchSourceRead?
-    private(set) public var listening = false
     
     public var debugDescription: String {
         return "ListenSocket \(socket?.debugDescription ?? "idle")"
@@ -234,16 +233,13 @@ public class ListenSocket : CustomDebugStringConvertible {
         }
         source?.resume()
         try socket?.listen(backlog: 10)
-        listening = true
     }
 
     public func cancel() {
-        if listening {
-            source?.cancel()
-            try? socket?.close()
-            source = nil
-            socket = nil
-        }
+        source?.cancel()
+        try? socket?.close()
+        source = nil
+        socket = nil
     }
 
     deinit {
