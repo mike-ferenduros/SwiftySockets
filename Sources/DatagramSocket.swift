@@ -19,7 +19,7 @@ public protocol DatagramSocketDelegate: class {
 /**
     Buffered, async UDP.
 */
-public class DatagramSocket {
+public class DatagramSocket : CustomDebugStringConvertible {
 
     public var maxReadSize = 1500
 
@@ -28,6 +28,9 @@ public class DatagramSocket {
 
     private(set) var isOpen = true
 
+    public var debugDescription: String {
+        return "DatagramSocket \(socket.debugDescription)"
+    }
 
     private let readSource: DispatchSourceRead
     private init(socket: Socket6, delegate: DatagramSocketDelegate? = nil) {

@@ -26,7 +26,11 @@ private let sock_recvfrom = recvfrom
     Wrapper for socket descriptor, providing a slightly friendlier interface to the socket API
     Lifetime management is NOT handled
 */
-public struct Socket6 {
+public struct Socket6 : CustomDebugStringConvertible {
+
+    public var debugDescription: String {
+        return "fd \(fd): \(sockname) -> \(peername?.debugDescription ?? "unconnected")"
+    }
 
     private func check(_ result: Int) throws { try check(Int32(result)) }
     private func check(_ result: Int32) throws {

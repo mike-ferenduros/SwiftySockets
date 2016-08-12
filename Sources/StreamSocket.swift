@@ -9,10 +9,15 @@
 import Foundation
 
 
+public protocol StreamSocketDelegate {
+    func streamSocketDidDisconnect(_ socket: StreamSocket)
+}
+
+
 /**
     Buffered, async TCP
 */
-public class StreamSocket {
+public class StreamSocket : CustomDebugStringConvertible {
 
     public let socket: Socket6
 
@@ -20,11 +25,18 @@ public class StreamSocket {
     private let wstream: CFWriteStream
     private var canRead = false
     private var canWrite = false
+    public var delegate: StreamSocketDelegate?
 
     public private(set) var isOpen = true
 
-    public init(socket: Socket6) {
+    public var debugDescription: String {
+        return "\(isOpen ? "Open" : "Closed") StreamSocket \(socket)"
+    }
+
+    public init(socket: Socket6, delegate: StreamSocketDelegate? = nil) {
         self.socket = socket
+
+        self.delegate = delegate
 
         var urstream: Unmanaged<CFReadStream>?
         var uwstream: Unmanaged<CFWriteStream>?
@@ -68,6 +80,7 @@ public class StreamSocket {
         }
         if event.contains(.endEncountered) || event.contains(.errorOccurred) {
             close()
+            self.delegate?.streamSocketDidDisconnect(self)
         }
     }
 
@@ -186,10 +199,15 @@ extension StreamSocket {
 }
 
 
-public class ListenSocket {
+public class ListenSocket : CustomDebugStringConvertible {
 
     private(set) public var socket: Socket6?
     private var source: DispatchSourceRead?
+    private(set) public var listening = false
+    
+    public var debugDescription: String {
+        return "ListenSocket \(socket?.debugDescription ?? "idle")"
+    }
 
     public init() {
     }
@@ -199,9 +217,7 @@ public class ListenSocket {
     }
 
     public func listen(address: sockaddr_in6, accept: (Socket6)->()) throws {
-        if socket != nil || source != nil {
-            cancel()
-        }
+        cancel()
 
         socket = Socket6(type: SOCK_STREAM)
         try socket!.bind(to: address)
@@ -218,13 +234,16 @@ public class ListenSocket {
         }
         source?.resume()
         try socket?.listen(backlog: 10)
+        listening = true
     }
 
     public func cancel() {
-        source?.cancel()
-        try? socket?.close()
-        source = nil
-        socket = nil
+        if listening {
+            source?.cancel()
+            try? socket?.close()
+            source = nil
+            socket = nil
+        }
     }
 
     deinit {
