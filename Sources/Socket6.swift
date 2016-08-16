@@ -10,6 +10,7 @@ import Foundation
 
 
 private let sock_close = close
+private let sock_shutdown = shutdown
 private let sock_setsockopt = setsockopt
 private let sock_getsockopt = getsockopt
 private let sock_bind = bind
@@ -70,6 +71,12 @@ public struct Socket6 : CustomDebugStringConvertible {
 
     public func close() throws {
         let result = sock_close(fd)
+        try check(result)
+    }
+
+    public enum ShutdownOptions: Int32 { case read = 0, write = 1, readwrite = 2 }
+    public func shutdown(_ how: ShutdownOptions) throws {
+        let result = sock_shutdown(fd, how.rawValue)
         try check(result)
     }
 

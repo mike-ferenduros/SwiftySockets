@@ -91,10 +91,6 @@ extension sockaddr_in6 : Equatable, CustomDebugStringConvertible {
         set { sin6_scope_id = newValue.bigEndian }
     }
 
-    public var valid: Bool {
-        return (Int32(sin6_family) == AF_INET6) && (Int(sin6_len) == sizeof(sockaddr_in6.self))
-    }
-
     ///Wildcard address, optionally with port
     public static func any(port: UInt16 = 0) -> sockaddr_in6 {
         return sockaddr_in6(addr: in6_addr.any, port: port)
