@@ -154,17 +154,17 @@ public class StreamSocket : CustomDebugStringConvertible {
         }
     }
 
-    public func read(_ count: Int, completion: (Data?)->()) {
+    public func read(_ count: Int, completion: @escaping (Data?)->()) {
         readQueue.append((min: count, max: count, completion: completion))
         self.tryRead()
     }
 
-    public func read(max: Int, completion: (Data?)->()) {
+    public func read(max: Int, completion: @escaping (Data?)->()) {
         readQueue.append((min: 1, max: max, completion: completion))
         tryRead()
     }
 
-    public func read(min: Int, max: Int, completion: (Data?)->()) {
+    public func read(min: Int, max: Int, completion: @escaping (Data?)->()) {
         readQueue.append((min: min, max: max, completion: completion))
         tryRead()
     }
@@ -178,7 +178,7 @@ public class StreamSocket : CustomDebugStringConvertible {
 
 
 extension StreamSocket {
-    public static func connect(to address: sockaddr_in6, completion: (StreamSocket?,Error?)->()) {
+    public static func connect(to address: sockaddr_in6, completion: @escaping (StreamSocket?,Error?)->()) {
 
         let sock = Socket6(type: SOCK_STREAM)
 
@@ -211,11 +211,11 @@ public class ListenSocket : CustomDebugStringConvertible {
     public init() {
     }
 
-    public func listen(port: UInt16, accept: (Socket6)->()) throws {
+    public func listen(port: UInt16, accept: @escaping (Socket6)->()) throws {
         try listen(address: sockaddr_in6.any(port: port), accept: accept)
     }
 
-    public func listen(address: sockaddr_in6, accept: (Socket6)->()) throws {
+    public func listen(address: sockaddr_in6, accept: @escaping (Socket6)->()) throws {
         cancel()
 
         socket = Socket6(type: SOCK_STREAM)

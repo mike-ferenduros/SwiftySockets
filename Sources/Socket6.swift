@@ -82,12 +82,12 @@ public struct Socket6 : CustomDebugStringConvertible {
 
     public func setsockopt<T>(_ level: Int32, _ option: Int32, _ value: T) throws {
         var value = value
-        let result = sock_setsockopt(fd, level, option, &value, socklen_t(sizeofValue(value)))
+        let result = sock_setsockopt(fd, level, option, &value, socklen_t(MemoryLayout<T>.size))
         try check(result)
     }
 
     public func getsockopt<T>(_ level: Int32, _ option: Int32, _ value: inout T) throws {
-        var len = socklen_t(sizeof(T.self))
+        var len = socklen_t(MemoryLayout<T>.size)
         let result = sock_getsockopt(fd, level, option, &value, &len)
         try check(result)
     }
@@ -116,7 +116,7 @@ public struct Socket6 : CustomDebugStringConvertible {
     }
 
 
-    public func send(buffer: UnsafePointer<Void>, length: Int, flags: Int32 = 0) throws -> Int {
+    public func send(buffer: UnsafeRawPointer, length: Int, flags: Int32 = 0) throws -> Int {
         let result = sock_send(fd, buffer, length, flags)
         try check(result)
         return Int(result)
@@ -128,7 +128,7 @@ public struct Socket6 : CustomDebugStringConvertible {
         return Int(result)
     }
 
-    public func send(buffer: UnsafePointer<Void>, length: Int, to address: sockaddr_in6, flags: Int32 = 0) throws -> Int {
+    public func send(buffer: UnsafeRawPointer, length: Int, to address: sockaddr_in6, flags: Int32 = 0) throws -> Int {
         let result = address.withSockaddr { sock_sendto(fd, buffer, length, flags, $0, $1) }
         try check(result)
         return Int(result)
@@ -138,7 +138,7 @@ public struct Socket6 : CustomDebugStringConvertible {
         return try buffer.withUnsafeBytes { try send(buffer: $0, length: buffer.count, to: address, flags: flags) }
     }
 
-    public func recv(buffer: UnsafeMutablePointer<Void>, length: Int, flags: Int32 = 0) throws -> Int {
+    public func recv(buffer: UnsafeMutableRawPointer, length: Int, flags: Int32 = 0) throws -> Int {
         let result = sock_recv(fd, buffer, length, flags)
         try check(result)
         return Int(result)
@@ -151,7 +151,7 @@ public struct Socket6 : CustomDebugStringConvertible {
         return result == buffer.count ? buffer : buffer.subdata(in: 0..<result)
     }
 
-    public func recvfrom(buffer: UnsafeMutablePointer<Void>, length: Int, flags: Int32 = 0) throws -> (Int,sockaddr_in6) {
+    public func recvfrom(buffer: UnsafeMutableRawPointer, length: Int, flags: Int32 = 0) throws -> (Int,sockaddr_in6) {
         var addr = sockaddr_in6()
         let result = addr.withMutableSockaddr { sock_recvfrom(fd, buffer, length, flags, $0, $1) }
         try check(result)

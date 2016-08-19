@@ -104,7 +104,7 @@ extension sockaddr_in6 : Equatable, CustomDebugStringConvertible {
     ///Initialise with zero (=wildcard) address.
     public init() {
         self.init(
-            sin6_len: UInt8(sizeof(sockaddr_in6.self)),
+            sin6_len: UInt8(MemoryLayout<sockaddr_in6>.size),
             sin6_family: sa_family_t(AF_INET6),
             sin6_port: 0,
             sin6_flowinfo: 0,
@@ -136,12 +136,12 @@ extension sockaddr_in6 : Equatable, CustomDebugStringConvertible {
 
         switch family {
             case AF_INET:
-                guard data.count >= sizeof(sockaddr_in.self) else { return nil }
+                guard data.count >= MemoryLayout<sockaddr_in>.size else { return nil }
                 let sa4 = data.withUnsafeBytes { (sa: UnsafePointer<sockaddr_in>) -> sockaddr_in in sa.pointee }
                 self.init(sa: sa4)
 
             case AF_INET6:
-                guard data.count >= sizeof(sockaddr_in6.self) else { return nil }
+                guard data.count >= MemoryLayout<sockaddr_in6>.size else { return nil }
                 self.init()
                 self = data.withUnsafeBytes { (sa: UnsafePointer<sockaddr_in6>) -> sockaddr_in6 in sa.pointee }
             
@@ -157,18 +157,20 @@ extension sockaddr_in6 : Equatable, CustomDebugStringConvertible {
     public init?(ai: addrinfo) {
         switch ai.ai_family {
             case AF_INET6:
-                guard Int(ai.ai_addrlen) == sizeof(sockaddr_in6.self) else { return nil }
+                guard Int(ai.ai_addrlen) == MemoryLayout<sockaddr_in6>.size else { return nil }
                 self.init()
-                guard let sa6 = UnsafePointer<sockaddr_in6>(ai.ai_addr) else { return nil }
-                self = sa6.pointee
+                guard let sa = ai.ai_addr else { return nil }
+                let sa6 = sa.withMemoryRebound(to: sockaddr_in6.self, capacity: 1) { return $0.pointee }
+                self = sa6
                 self.sin6_family = sa_family_t(AF_INET6)
-                self.sin6_len = UInt8(sizeof(sockaddr_in6.self))
+                self.sin6_len = UInt8(MemoryLayout<sockaddr_in6>.size)
 
             case AF_INET:
-                guard Int(ai.ai_addrlen) == sizeof(sockaddr_in.self) else { return nil }
-                guard let sa4 = UnsafePointer<sockaddr_in>(ai.ai_addr) else { return nil }
-                self.init(sa: sa4.pointee)
-            
+                guard Int(ai.ai_addrlen) == MemoryLayout<sockaddr_in>.size else { return nil }
+                guard let sa = ai.ai_addr else { return nil }
+                let sa4 = sa.withMemoryRebound(to: sockaddr_in.self, capacity: 1) { return $0.pointee }
+                self.init(sa: sa4)
+
             default:
                 return nil
         }
@@ -180,12 +182,10 @@ extension sockaddr_in6 : Equatable, CustomDebugStringConvertible {
 
         Useful for passing self to socket functions that require an input sockaddr pointer
     */
-    public func withSockaddr<T>(_ block: @noescape (UnsafePointer<sockaddr>,socklen_t)->T) -> T {
-        let thisIsRidiculous: @noescape(UnsafePointer<sockaddr_in6>)->T = { ptr in
-            return block(UnsafePointer<sockaddr>(ptr), socklen_t(sizeof(sockaddr_in6.self)))
-        }
+    public func withSockaddr<T>(_ block: (UnsafePointer<sockaddr>,socklen_t)->T) -> T {
+        let cast = { (ptr: UnsafePointer<sockaddr_in6>) -> UnsafePointer<sockaddr> in UnsafePointer<sockaddr>(OpaquePointer(ptr)) }
         var sa = self
-        return thisIsRidiculous(&sa)
+        return block(cast(&sa), socklen_t(MemoryLayout<sockaddr_in6>.size))
     }
 
     /**
@@ -195,12 +195,11 @@ extension sockaddr_in6 : Equatable, CustomDebugStringConvertible {
 
         On block-completion, modified length parameter is ignored
     */
-    public mutating func withMutableSockaddr<T>(_ block: @noescape(UnsafeMutablePointer<sockaddr>,UnsafeMutablePointer<socklen_t>)->T) -> T {
-        var maxLen = socklen_t(sizeof(sockaddr_in6.self))
-        let thisIsRidiculous: @noescape(UnsafeMutablePointer<sockaddr_in6>)->T = { ptr in
-            return block(UnsafeMutablePointer<sockaddr>(ptr), &maxLen)
-        }
-        return thisIsRidiculous(&self)
+    public mutating func withMutableSockaddr<T>(_ block: (UnsafeMutablePointer<sockaddr>,UnsafeMutablePointer<socklen_t>)->T) -> T {
+        var maxLen = socklen_t(MemoryLayout<sockaddr_in6>.size)
+        let cast = { (ptr: UnsafeMutablePointer<sockaddr_in6>) -> UnsafeMutablePointer<sockaddr> in UnsafeMutablePointer<sockaddr>(OpaquePointer(ptr)) }
+        var sa = self
+        return block(cast(&sa), &maxLen)
     }
 }
 
@@ -213,7 +212,7 @@ extension sockaddr_in6 {
         Invoke getaddrinfo to lookup IPv6 addresses for a hostname, on a global queue.
         Invokes completion on main queue with results, or [] if an error occurred
     */
-    public static func getaddrinfo(hostname: String, port: UInt16, completion: ([sockaddr_in6], POSIXError?)->()) {
+    public static func getaddrinfo(hostname: String, port: UInt16, completion: @escaping ([sockaddr_in6], POSIXError?)->()) {
         DispatchQueue.global().async {
             let cstr = hostname.cString(using: .utf8)
             let port = "\(port)".cString(using: .utf8)
