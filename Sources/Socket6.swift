@@ -65,8 +65,8 @@ public struct Socket6 : CustomDebugStringConvertible {
     }
 
     ///Initialise with the desired type (usually SOCK_STREAM or SOCK_DGRAM)
-    public init(type: Int32 = SOCK_STREAM) {
-        self.init(fd: socket(AF_INET6, type, 0))
+    public init(type: Int32 = Int32(SOCK_STREAM)) {
+        self.init(fd: socket(Int32(AF_INET6), type, 0))
     }
 
     public func close() throws {
@@ -93,7 +93,7 @@ public struct Socket6 : CustomDebugStringConvertible {
     }
 
     public func bind(to address: sockaddr_in6) throws {
-        try? setsockopt(IPPROTO_IPV6, IPV6_V6ONLY, Int32(0))
+        try? setsockopt(Int32(IPPROTO_IPV6), Int32(IPV6_V6ONLY), Int32(0))
         let result = address.withSockaddr { sock_bind(fd, $0, $1) }
         try check(result)
     }

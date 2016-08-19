@@ -15,10 +15,10 @@ extension in6_addr : Equatable, CustomStringConvertible {
     public var description: String {
         var str = [CChar](repeating: 0, count: Int(INET6_ADDRSTRLEN))
         var mself = self
-        inet_ntop(AF_INET6, &mself, &str, socklen_t(str.count))
+        inet_ntop(Int32(AF_INET6), &mself, &str, socklen_t(str.count))
         return String(cString: str)
     }
-    
+
     public static func ==(lhs: in6_addr, rhs: in6_addr) -> Bool {
         return lhs.bytes == rhs.bytes
     }
@@ -217,7 +217,7 @@ extension sockaddr_in6 {
             let cstr = hostname.cString(using: .utf8)
             let port = "\(port)".cString(using: .utf8)
             var addresses: UnsafeMutablePointer<addrinfo>?
-            var hint = addrinfo(ai_flags: 0, ai_family: AF_INET6, ai_socktype: 0, ai_protocol: 0, ai_addrlen: 0, ai_canonname: nil, ai_addr: nil, ai_next: nil)
+            var hint = addrinfo(ai_flags: 0, ai_family: Int32(AF_INET6), ai_socktype: 0, ai_protocol: 0, ai_addrlen: 0, ai_canonname: nil, ai_addr: nil, ai_next: nil)
             var results: [sockaddr_in6] = []
 
             guard sock_getaddrinfo(cstr, port, &hint, &addresses) == 0  else {

@@ -42,17 +42,17 @@ public class DatagramSocket : CustomDebugStringConvertible {
     }
 
     public convenience init(boundTo address: sockaddr_in6, delegate: DatagramSocketDelegate? = nil) throws {
-        self.init(socket: Socket6(type: SOCK_DGRAM), delegate: delegate)
+        self.init(socket: Socket6(type: Int32(SOCK_DGRAM)), delegate: delegate)
         try self.socket.bind(to: address)
     }
 
     public convenience init(boundTo port: UInt16, delegate: DatagramSocketDelegate? = nil) throws {
-        self.init(socket: Socket6(type: SOCK_DGRAM), delegate: delegate)
+        self.init(socket: Socket6(type: Int32(SOCK_DGRAM)), delegate: delegate)
         try self.socket.bind(to: sockaddr_in6.any(port: port))
     }
 
     public convenience init(connectedTo address: sockaddr_in6, delegate: DatagramSocketDelegate? = nil) throws {
-        self.init(socket: Socket6(type: SOCK_DGRAM), delegate: delegate)
+        self.init(socket: Socket6(type: Int32(SOCK_DGRAM)), delegate: delegate)
         try self.socket.connect(to: address)
     }
 
@@ -70,7 +70,7 @@ public class DatagramSocket : CustomDebugStringConvertible {
     private func readDatagrams() {
         guard isOpen else { return }
 
-        while let (data,sender) = try? socket.recvfrom(length: self.maxReadSize, flags: MSG_DONTWAIT) {
+        while let (data,sender) = try? socket.recvfrom(length: self.maxReadSize, flags: Int32(MSG_DONTWAIT)) {
             self.delegate?.datagramSocket(self, didReceive: data, from: sender)
         }
     }
@@ -79,9 +79,9 @@ public class DatagramSocket : CustomDebugStringConvertible {
 
     public func send(data: Data, to addr: sockaddr_in6?) {
         if let addr = addr {
-            _ = try? socket.send(buffer: data, to: addr, flags: MSG_DONTWAIT)
+            _ = try? socket.send(buffer: data, to: addr, flags: Int32(MSG_DONTWAIT))
         } else {
-            _ = try? socket.send(buffer: data, flags: MSG_DONTWAIT)
+            _ = try? socket.send(buffer: data, flags: Int32(MSG_DONTWAIT))
         }
     }
 }
