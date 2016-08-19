@@ -18,7 +18,7 @@ public struct POSIXError : LocalizedError, Equatable, CustomDebugStringConvertib
     }
 
     public var debugDescription: String {
-        return "POSIXError(\(_code)): \(errorDescription!)"
+        return "POSIXError(\(code)): \(errorDescription!)"
     }
 
     public init(_ code: Int32) {
