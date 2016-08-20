@@ -239,33 +239,37 @@ private let sock_getaddrinfo = getaddrinfo
 extension sockaddr_in6 {
 
     /**
-        Invoke getaddrinfo to lookup IPv6 addresses for a hostname, on a global queue.
-        Invokes completion on main queue with results, or [] if an error occurred
+        Invoke getaddrinfo to lookup IPv6 addresses for a hostname.
     */
-    public static func getaddrinfo(hostname: String, port: UInt16, completion: @escaping ([sockaddr_in6], POSIXError?)->()) {
+    public static func getaddrinfo(hostname: String, port: UInt16) throws -> [sockaddr_in6] {
+        let cstr = hostname.cString(using: .utf8)
+        let port = "\(port)".cString(using: .utf8)
+        var addresses: UnsafeMutablePointer<addrinfo>?
+        var hint = addrinfo(ai_flags: 0, ai_family: Int32(AF_INET6), ai_socktype: 0, ai_protocol: 0, ai_addrlen: 0, ai_canonname: nil, ai_addr: nil, ai_next: nil)
+        var results: [sockaddr_in6] = []
+
+        guard sock_getaddrinfo(cstr, port, &hint, &addresses) == 0  else { throw POSIXError(errno) }
+
+        var curr = addresses
+        while let info = curr?.pointee {
+            if let sa = sockaddr_in6(ai: info) {
+                results.append(sa)
+            }
+            curr = info.ai_next
+        }
+
+        freeaddrinfo(addresses)
+        return results
+    }
+
+    public static func getaddrinfo(hostname: String, port: UInt16, completion: @escaping ([sockaddr_in6], Error?)->()) {
         DispatchQueue.global().async {
-            let cstr = hostname.cString(using: .utf8)
-            let port = "\(port)".cString(using: .utf8)
-            var addresses: UnsafeMutablePointer<addrinfo>?
-            var hint = addrinfo(ai_flags: 0, ai_family: Int32(AF_INET6), ai_socktype: 0, ai_protocol: 0, ai_addrlen: 0, ai_canonname: nil, ai_addr: nil, ai_next: nil)
-            var results: [sockaddr_in6] = []
-
-            guard sock_getaddrinfo(cstr, port, &hint, &addresses) == 0  else {
-                let error = POSIXError(errno)
-                return DispatchQueue.main.async { completion([], error) }
+            do {
+                let results = try getaddrinfo(hostname: hostname, port: port)
+                DispatchQueue.main.async { completion(results, nil) }
+            } catch let e {
+                DispatchQueue.main.async { completion([], e) }
             }
-
-            var curr = addresses
-            while let info = curr?.pointee {
-                if let sa = sockaddr_in6(ai: info) {
-                    results.append(sa)
-                }
-                curr = info.ai_next
-            }
-
-            freeaddrinfo(addresses)
-
-            DispatchQueue.main.async { completion(results, nil) }
         }
     }
 }
