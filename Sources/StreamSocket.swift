@@ -209,6 +209,10 @@ public class ListenSocket : CustomDebugStringConvertible {
         return "ListenSocket \(socket?.debugDescription ?? "idle")"
     }
 
+    public init() {
+        //default init() is internal, not public
+    }
+
     public func listen(port: UInt16, accept: @escaping (Socket6)->()) throws {
         try listen(address: sockaddr_in6.any(port: port), accept: accept)
     }
