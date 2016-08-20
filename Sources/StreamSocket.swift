@@ -157,7 +157,7 @@ public class StreamSocket : CustomDebugStringConvertible {
 
     public func read(_ count: Int, completion: @escaping (Data?)->()) {
         readQueue.append((min: count, max: count, completion: completion))
-        self.tryRead()
+        tryRead()
     }
 
     public func read(max: Int, completion: @escaping (Data?)->()) {
