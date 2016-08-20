@@ -25,14 +25,14 @@ public class DatagramSocket : CustomDebugStringConvertible {
 
     public weak var delegate: DatagramSocketDelegate?
     public let socket: Socket6
+    private let readSource: DispatchSourceRead
 
-    private(set) var isOpen = true
+    private(set) public var isOpen = true
 
     public var debugDescription: String {
         return "DatagramSocket \(socket.debugDescription)"
     }
 
-    private let readSource: DispatchSourceRead
     private init(socket: Socket6, delegate: DatagramSocketDelegate? = nil) {
         self.socket = socket
         self.delegate = delegate
@@ -57,8 +57,11 @@ public class DatagramSocket : CustomDebugStringConvertible {
     }
 
     public func close() {
-        readSource.cancel()
-        try? socket.close()
+        if isOpen {
+            readSource.cancel()
+            try? socket.close()
+            isOpen = false
+        }
     }
 
     deinit {
@@ -78,6 +81,7 @@ public class DatagramSocket : CustomDebugStringConvertible {
 
 
     public func send(data: Data, to addr: sockaddr_in6?) {
+        guard isOpen else { return }
         if let addr = addr {
             _ = try? socket.send(buffer: data, to: addr, flags: Int32(MSG_DONTWAIT))
         } else {

@@ -15,7 +15,7 @@ extension in6_addr : Equatable, CustomStringConvertible {
     public var description: String {
         var str = [CChar](repeating: 0, count: Int(INET6_ADDRSTRLEN))
         var mself = self
-        inet_ntop(Int32(AF_INET6), &mself, &str, socklen_t(str.count))
+        inet_ntop(AF_INET6, &mself, &str, socklen_t(str.count))
         return String(cString: str)
     }
 
@@ -28,13 +28,38 @@ extension in6_addr : Equatable, CustomStringConvertible {
 
     /**
         Initialise with either 4- or 16-byte address
-        4-byte addresses are converted to IPv6 representation
+        4-byte addresses are converted to IPv4-mapped IPv6 representation
     */
     init(bytes: [UInt8]) {
         self.init()
         self.bytes = bytes
     }
 
+    /**
+        Initialise with IPv4 or IPv6 string, eg. "123.123.123.123" or "2001:db8:85a3::8a2e:370:7334"
+    */
+    init?(string: String) {
+        let cstr = Array(string.utf8CString)
+        var addr6 = in6_addr()
+        if inet_pton(AF_INET6, cstr, &addr6) == 1 {
+            self.init(addr6)
+        } else {
+            var addr4 = in_addr()
+            if inet_pton(AF_INET, cstr, &addr4) == 1 {
+                self.init(in4: addr4)
+            } else {
+                return nil
+            }
+        }
+    }
+
+    init(_ addr: in6_addr) {
+        self = addr
+    }
+
+    /**
+        Initialise as IPv4-mapped IPv6 address
+    */
     init(in4: in_addr) {
         self.init()
         let ip4 = in4.s_addr.bigEndian
@@ -44,7 +69,7 @@ extension in6_addr : Equatable, CustomStringConvertible {
     /**
         Always reads as array of 16 bytes
         May be written as array of either 4 or 16 bytes
-        4-byte addresses are converted to IPv6 representation
+        4-byte addresses are converted to IPv4-mapped IPv6 addresses
     */
     var bytes: [UInt8] {
         get {
@@ -120,7 +145,7 @@ extension sockaddr_in6 : Equatable, CustomDebugStringConvertible {
     }
 
     /**
-        Initialise from IPv4 sockaddr structure, converting address to IPv6 representation
+        Initialise from IPv4 sockaddr structure, converting to IPv4-mapped IPv6
     */
     public init(sa: sockaddr_in) {
         let addr = in6_addr(in4: sa.sin_addr)
@@ -183,9 +208,12 @@ extension sockaddr_in6 : Equatable, CustomDebugStringConvertible {
         Useful for passing self to socket functions that require an input sockaddr pointer
     */
     public func withSockaddr<T>(_ block: (UnsafePointer<sockaddr>,socklen_t)->T) -> T {
-        let cast = { (ptr: UnsafePointer<sockaddr_in6>) -> UnsafePointer<sockaddr> in UnsafePointer<sockaddr>(OpaquePointer(ptr)) }
-        var sa = self
-        return block(cast(&sa), socklen_t(MemoryLayout<sockaddr_in6>.size))
+        var mself = self
+        return withUnsafePointer(to: &mself) { sa6 in
+            sa6.withMemoryRebound(to: sockaddr.self, capacity: 1) { sa in
+                block(sa, socklen_t(MemoryLayout<sockaddr_in6>.size))
+            }
+        }
     }
 
     /**
@@ -197,9 +225,11 @@ extension sockaddr_in6 : Equatable, CustomDebugStringConvertible {
     */
     public mutating func withMutableSockaddr<T>(_ block: (UnsafeMutablePointer<sockaddr>,UnsafeMutablePointer<socklen_t>)->T) -> T {
         var maxLen = socklen_t(MemoryLayout<sockaddr_in6>.size)
-        let cast = { (ptr: UnsafeMutablePointer<sockaddr_in6>) -> UnsafeMutablePointer<sockaddr> in UnsafeMutablePointer<sockaddr>(OpaquePointer(ptr)) }
-        var sa = self
-        return block(cast(&sa), &maxLen)
+        return withUnsafeMutablePointer(to: &self) { sa6 in
+            sa6.withMemoryRebound(to: sockaddr.self, capacity: 1) { sa in
+                block(sa, &maxLen)
+            }
+        }
     }
 }
 
