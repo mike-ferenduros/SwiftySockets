@@ -11,18 +11,22 @@ import Foundation
 
 public struct POSIXError : LocalizedError, Equatable, CustomDebugStringConvertible {
 
-    public let code: Int32
+    public let code: POSIXErrorCode
 
     public var errorDescription: String? {
-        return String(cString: strerror(code))
+        return String(cString: strerror(code.rawValue))
     }
 
     public var debugDescription: String {
-        return "POSIXError(\(code)): \(errorDescription!)"
+        return "POSIXError(\(code.rawValue)): \(errorDescription!)"
+    }
+
+    public init(_ code: POSIXErrorCode) {
+        self.code = code
     }
 
     public init(_ code: Int32) {
-        self.code = code
+        self.code = POSIXErrorCode(rawValue:code)!
     }
 
     public static func ==(lhs: POSIXError, rhs: POSIXError) -> Bool {
