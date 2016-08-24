@@ -61,9 +61,9 @@ public class StreamSocket : CustomDebugStringConvertible {
         didSet {
             if wantWriteEvents == oldValue { return }
             if wantWriteEvents {
-                rsource.resume()
+                wsource.resume()
             } else {
-                rsource.suspend()
+                wsource.suspend()
             }
         }
     }
