@@ -140,7 +140,7 @@ public class StreamSocket : CustomDebugStringConvertible {
         var buf = Data(count: wanted)
         canRead = false
         let bytesRead = buf.withUnsafeMutableBytes { return CFReadStreamRead(rstream, $0, buf.count) }
-        if bytesRead == 0 { return }
+        if bytesRead <= 0 { return }
         if bytesRead < buf.count {
             buf = buf.subdata(in: 0..<bytesRead)
         }
