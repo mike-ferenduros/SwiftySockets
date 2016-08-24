@@ -24,14 +24,14 @@ extension in6_addr : Equatable, CustomStringConvertible {
         return lhs.bytes == rhs.bytes
     }
 
-    static let any = in6_addr(bytes: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])
-    static let loopback = in6_addr(bytes: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1])
+    public static let any = in6_addr(bytes: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])
+    public static let loopback = in6_addr(bytes: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1])
 
     /**
         Initialise with either 4- or 16-byte address
         4-byte addresses are converted to IPv4-mapped IPv6 representation
     */
-    init(bytes: [UInt8]) {
+    public init(bytes: [UInt8]) {
         self.init()
         self.bytes = bytes
     }
@@ -39,7 +39,7 @@ extension in6_addr : Equatable, CustomStringConvertible {
     /**
         Initialise with IPv4 or IPv6 string, eg. "123.123.123.123" or "2001:db8:85a3::8a2e:370:7334"
     */
-    init?(string: String) {
+    public init?(_ string: String) {
         let cstr = Array(string.utf8CString)
         var addr6 = in6_addr()
         if inet_pton(AF_INET6, cstr, &addr6) == 1 {
@@ -47,21 +47,21 @@ extension in6_addr : Equatable, CustomStringConvertible {
         } else {
             var addr4 = in_addr()
             if inet_pton(AF_INET, cstr, &addr4) == 1 {
-                self.init(in4: addr4)
+                self.init(addr4)
             } else {
                 return nil
             }
         }
     }
 
-    init(_ addr: in6_addr) {
+    public init(_ addr: in6_addr) {
         self = addr
     }
 
     /**
         Initialise as IPv4-mapped IPv6 address
     */
-    init(in4: in_addr) {
+    public init(_ in4: in_addr) {
         self.init()
         let ip4 = in4.s_addr.bigEndian
         self.bytes = (0..<4).map { UInt8((ip4 >> (24 - $0*8)) & 0xFF) }
@@ -72,7 +72,7 @@ extension in6_addr : Equatable, CustomStringConvertible {
         May be written as array of either 4 or 16 bytes
         4-byte addresses are converted to IPv4-mapped IPv6 addresses
     */
-    var bytes: [UInt8] {
+    public var bytes: [UInt8] {
         get {
             var result = [UInt8](repeating: 0, count: 16)
             var mself = self
@@ -149,17 +149,19 @@ extension sockaddr_in6 : Equatable, CustomDebugStringConvertible {
         #endif
     }
 
-    public init(addr: in6_addr, port: UInt16) {
+    public init(addr: in6_addr, port: UInt16, flowinfo: UInt32 = 0, scope_id: UInt32 = 0) {
         self.init()
         self.sin6_addr = addr
         self.port = port
+        self.flowinfo = flowinfo
+        self.scope_id = scope_id
     }
 
     /**
         Initialise from IPv4 sockaddr structure, converting to IPv4-mapped IPv6
     */
     public init(sa: sockaddr_in) {
-        let addr = in6_addr(in4: sa.sin_addr)
+        let addr = in6_addr(sa.sin_addr)
         self.init(addr: addr, port: sa.sin_port.bigEndian)
     }
 
