@@ -8,7 +8,6 @@
 
 import Foundation
 import Dispatch
-import CoreFoundation
 
 
 public protocol StreamSocketDelegate {
@@ -23,10 +22,8 @@ public class StreamSocket : CustomDebugStringConvertible {
 
     public let socket: Socket6
 
-    private let rstream: CFReadStream
-    private let wstream: CFWriteStream
-    private var canRead = false
-    private var canWrite = false
+    private let rsource: DispatchSourceRead
+    private let wsource: DispatchSourceWrite
     public var delegate: StreamSocketDelegate?
 
     public private(set) var isOpen = true
@@ -37,89 +34,63 @@ public class StreamSocket : CustomDebugStringConvertible {
 
     public init(socket: Socket6, delegate: StreamSocketDelegate? = nil) {
         self.socket = socket
-
         self.delegate = delegate
+        rsource = DispatchSource.makeReadSource(fileDescriptor: self.socket.fd, queue: DispatchQueue.main)
+        wsource = DispatchSource.makeWriteSource(fileDescriptor: self.socket.fd, queue: DispatchQueue.main)
 
-        var urstream: Unmanaged<CFReadStream>?
-        var uwstream: Unmanaged<CFWriteStream>?
-        CFStreamCreatePairWithSocket(nil, self.socket.fd, &urstream, &uwstream)
-        rstream = urstream!.takeRetainedValue()
-        wstream = uwstream!.takeRetainedValue()
-
-        let pself = Unmanaged.passUnretained(self).toOpaque()
-        var callbackContext = CFStreamClientContext(version: 0, info: pself, retain: nil, release: nil, copyDescription: nil)
-
-        let rcallback: CFReadStreamClientCallBack = { _, event, info in
-            let iself = (Unmanaged.fromOpaque(info!) as Unmanaged<StreamSocket>).takeUnretainedValue()
-            iself.handle(event: event)
+        rsource.setEventHandler { [weak self] in
+            if let sself = self {
+                sself.tryRead()
+                sself.wantReadEvents = sself.readQueue.count > 0
+            }
         }
 
-        let wcallback: CFWriteStreamClientCallBack = { _, event, info in
-            let iself = (Unmanaged.fromOpaque(info!) as Unmanaged<StreamSocket>).takeUnretainedValue()
-            iself.handle(event: event)
+        wsource.setEventHandler { [weak self] in
+            if let sself = self {
+                sself.tryWrite()
+                sself.wantWriteEvents = sself.writeQueue.count > 0
+            }
         }
 
-        #if os(Linux)
-        let revents = kCFStreamEventHasBytesAvailable | kCFStreamEventErrorOccurred | kCFStreamEventEndEncountered
-        let wevents = kCFStreamEventCanAcceptBytes | kCFStreamEventErrorOccurred | kCFStreamEventEndEncountered
-        CFReadStreamSetClient(rstream, CFStreamEventType(revents), rcallback, &callbackContext)
-        CFWriteStreamSetClient(wstream, CFStreamEventType(wevents), wcallback, &callbackContext)
-        #else
-        let revents: CFStreamEventType = [.hasBytesAvailable, .errorOccurred, .endEncountered]
-        let wevents: CFStreamEventType = [.canAcceptBytes, .errorOccurred, .endEncountered]
-        CFReadStreamSetClient(rstream, revents.rawValue, rcallback, &callbackContext)
-        CFWriteStreamSetClient(wstream, wevents.rawValue, wcallback, &callbackContext)
-        #endif
-
-        #if os(Linux)
-        let commonModes = kCFRunLoopCommonModes
-        #else
-        let commonModes = CFRunLoopMode.commonModes
-        #endif
-        CFReadStreamScheduleWithRunLoop(rstream, CFRunLoopGetCurrent(), commonModes)
-        CFWriteStreamScheduleWithRunLoop(wstream, CFRunLoopGetCurrent(), commonModes)
-
-        CFReadStreamOpen(rstream)
-        CFWriteStreamOpen(wstream)
+        wantReadEvents = true
+        wantWriteEvents = true
     }
 
-    private func handle(event: CFStreamEventType) {
-        guard isOpen else { return }
-
-        #if os(Linux)
-        let readEvent = (event & CFStreamEventType(kCFStreamEventHasBytesAvailable)) != 0
-        let writeEvent = (event & CFStreamEventType(kCFStreamEventCanAcceptBytes)) != 0
-        let closedEvent = (event & CFStreamEventType(kCFStreamEventErrorOccurred | kCFStreamEventEndEncountered)) != 0
-        #else
-        let readEvent = event.contains(.hasBytesAvailable)
-        let writeEvent = event.contains(.canAcceptBytes)
-        let closedEvent = event.contains(.endEncountered) || event.contains(.errorOccurred)
-        #endif
-
-        if readEvent {
-            canRead = true
-            tryRead()
+    var wantReadEvents = false {
+        didSet {
+            if wantReadEvents == oldValue { return }
+            if wantReadEvents {
+                rsource.resume()
+            } else {
+                rsource.suspend()
+            }
         }
-        if writeEvent {
-            canWrite = true
-            tryWrite()
-        }
-        if closedEvent {
-            close()
-            self.delegate?.streamSocketDidDisconnect(self)
+    }
+
+    var wantWriteEvents = false {
+        didSet {
+            if wantWriteEvents == oldValue { return }
+            if wantWriteEvents {
+                rsource.resume()
+            } else {
+                rsource.suspend()
+            }
         }
     }
 
     deinit {
-        CFReadStreamSetClient(rstream, 0, nil, nil)
-        CFWriteStreamSetClient(wstream, 0, nil, nil)
         close()
+    }
+    
+    private func didDisconnect() {
+        close()
+        self.delegate?.streamSocketDidDisconnect(self)
     }
 
     public func close() {
         if isOpen {
-            CFReadStreamClose(rstream)
-            CFWriteStreamClose(wstream)
+            rsource.cancel()
+            wsource.cancel()
             try? socket.close()
             readQueue.removeAll()
             writeQueue.removeAll()
@@ -133,7 +104,7 @@ public class StreamSocket : CustomDebugStringConvertible {
     private var readBuffer: Data?
     private func tryRead() {
 
-        guard isOpen, let item = readQueue.first, canRead else { return }
+        guard isOpen, let item = readQueue.first else { return }
 
         var needed = item.min
         var wanted = item.max
@@ -143,11 +114,19 @@ public class StreamSocket : CustomDebugStringConvertible {
         }
 
         var buf = Data(count: wanted)
-        canRead = false
-        let bytesRead = buf.withUnsafeMutableBytes { return CFReadStreamRead(rstream, $0, buf.count) }
-        if bytesRead <= 0 { return }
-        if bytesRead < buf.count {
-            buf = buf.subdata(in: 0..<bytesRead)
+        do {
+            let bytesRead = try buf.withUnsafeMutableBytes { return try socket.recv(buffer: $0, length: buf.count) }
+
+            if bytesRead <= 0 { return }
+            if bytesRead < buf.count {
+                buf = buf.subdata(in: 0..<bytesRead)
+            }
+        } catch let e {
+            if let pe = e as? POSIXError, [EWOULDBLOCK,EAGAIN].contains(pe.code) {
+                return
+            }
+            didDisconnect()
+            return
         }
 
         if readBuffer != nil {
@@ -171,15 +150,22 @@ public class StreamSocket : CustomDebugStringConvertible {
 
     private func tryWrite() {
 
-        guard isOpen, let item = writeQueue.first, canWrite else { return }
+        guard isOpen, let item = writeQueue.first else { return }
 
-        canWrite = false
-        let bytesWritten = item.withUnsafeBytes { return CFWriteStreamWrite(wstream, $0, item.count) }
+        do {
+            let bytesWritten = try item.withUnsafeBytes { return try socket.send(buffer: $0, length: item.count, flags: .dontWait) }
 
-        if bytesWritten == item.count {
-            _ = writeQueue.removeFirst()
-        } else if bytesWritten > 0 {
-            writeQueue[0] = item.subdata(in: bytesWritten..<item.count)
+            if bytesWritten == item.count {
+                _ = writeQueue.removeFirst()
+            } else if bytesWritten > 0 {
+                writeQueue[0] = item.subdata(in: bytesWritten..<item.count)
+            }
+        } catch let e {
+            if let pe = e as? POSIXError, [EWOULDBLOCK,EAGAIN].contains(pe.code) {
+                return
+            }
+            didDisconnect()
+            return
         }
     }
 
