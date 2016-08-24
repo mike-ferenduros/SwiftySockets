@@ -60,10 +60,10 @@ public class StreamSocket : CustomDebugStringConvertible {
         }
 
         #if os(Linux)
-        let revents = CFStreamEventType(kCFStreamEventHasBytesAvailable | kCFStreamEventErrorOccurred | kCFStreamEventEndEncountered)
-        let wevents = CFStreamEventType(kCFStreamEventCanAcceptBytes | kCFStreamEventErrorOccurred | kCFStreamEventEndEncountered)
-        CFReadStreamSetClient(rstream, revents, rcallback, &callbackContext)
-        CFWriteStreamSetClient(wstream, wevents, wcallback, &callbackContext)
+        let revents = kCFStreamEventHasBytesAvailable | kCFStreamEventErrorOccurred | kCFStreamEventEndEncountered
+        let wevents = kCFStreamEventCanAcceptBytes | kCFStreamEventErrorOccurred | kCFStreamEventEndEncountered
+        CFReadStreamSetClient(rstream, revents, CFStreamEventType(rcallback), &callbackContext)
+        CFWriteStreamSetClient(wstream, wevents, CFStreamEventType(wcallback), &callbackContext)
         #else
         let revents: CFStreamEventType = [.hasBytesAvailable, .errorOccurred, .endEncountered]
         let wevents: CFStreamEventType = [.canAcceptBytes, .errorOccurred, .endEncountered]
@@ -71,8 +71,13 @@ public class StreamSocket : CustomDebugStringConvertible {
         CFWriteStreamSetClient(wstream, wevents.rawValue, wcallback, &callbackContext)
         #endif
 
-        CFReadStreamSetDispatchQueue(rstream, DispatchQueue.main)
-        CFWriteStreamSetDispatchQueue(wstream, DispatchQueue.main)
+        #if os(Linux)
+        let commonModes = kCFRunLoopCommonModes
+        #else
+        let commonModes = CFRunLoopMode.commonModes
+        #endif
+        CFReadStreamScheduleWithRunLoop(rstream, CFRunLoopGetCurrent(), commonModes)
+        CFWriteStreamScheduleWithRunLoop(wstream, CFRunLoopGetCurrent(), commonModes)
 
         CFReadStreamOpen(rstream)
         CFWriteStreamOpen(wstream)
