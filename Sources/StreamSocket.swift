@@ -59,10 +59,17 @@ public class StreamSocket : CustomDebugStringConvertible {
             iself.handle(event: event)
         }
 
+        #if os(Linux)
+        let revents = CFStreamEventType(kCFStreamEventHasBytesAvailable | kCFStreamEventErrorOccurred | kCFStreamEventEndEncountered)
+        let wevents = CFStreamEventType(kCFStreamEventCanAcceptBytes | kCFStreamEventErrorOccurred | kCFStreamEventEndEncountered)
+        CFReadStreamSetClient(rstream, revents, rcallback, &callbackContext)
+        CFWriteStreamSetClient(wstream, wevents, wcallback, &callbackContext)
+        #else
         let revents: CFStreamEventType = [.hasBytesAvailable, .errorOccurred, .endEncountered]
         let wevents: CFStreamEventType = [.canAcceptBytes, .errorOccurred, .endEncountered]
         CFReadStreamSetClient(rstream, revents.rawValue, rcallback, &callbackContext)
         CFWriteStreamSetClient(wstream, wevents.rawValue, wcallback, &callbackContext)
+        #endif
 
         CFReadStreamSetDispatchQueue(rstream, DispatchQueue.main)
         CFWriteStreamSetDispatchQueue(wstream, DispatchQueue.main)
@@ -72,15 +79,25 @@ public class StreamSocket : CustomDebugStringConvertible {
     }
 
     private func handle(event: CFStreamEventType) {
-        if event.contains(.hasBytesAvailable) {
+        #if os(Linux)
+        let readEvent = (event & CFStreamEventType(kCFStreamEventHasBytesAvailable)) != 0
+        let writeEvent = (event & CFStreamEventType(kCFStreamEventCanAcceptBytes)) != 0
+        let closedEvent = (event & CFStreamEventType(kCFStreamEventErrorOccurred | kCFStreamEventEndEncountered)) != 0
+        #else
+        let readEvent = event.contains(.hasBytesAvailable)
+        let writeEvent = event.contains(.canAcceptBytes)
+        let closedEvent = event.contains(.endEncountered) || event.contains(.errorOccurred)
+        #endif
+
+        if readEvent {
             canRead = true
             tryRead()
         }
-        if event.contains(.canAcceptBytes) {
+        if writeEvent {
             canWrite = true
             tryWrite()
         }
-        if event.contains(.endEncountered) || event.contains(.errorOccurred) {
+        if closedEvent {
             close()
             self.delegate?.streamSocketDidDisconnect(self)
         }
