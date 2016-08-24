@@ -38,19 +38,9 @@ public class StreamSocket : CustomDebugStringConvertible {
         rsource = DispatchSource.makeReadSource(fileDescriptor: self.socket.fd, queue: DispatchQueue.main)
         wsource = DispatchSource.makeWriteSource(fileDescriptor: self.socket.fd, queue: DispatchQueue.main)
 
-        rsource.setEventHandler { [weak self] in
-            if let sself = self {
-                sself.tryRead()
-                sself.wantReadEvents = sself.readQueue.count > 0
-            }
-        }
+        rsource.setEventHandler { [weak self] in self?.tryRead() }
 
-        wsource.setEventHandler { [weak self] in
-            if let sself = self {
-                sself.tryWrite()
-                sself.wantWriteEvents = sself.writeQueue.count > 0
-            }
-        }
+        wsource.setEventHandler { [weak self] in self?.tryWrite() }
 
         wantReadEvents = true
         wantWriteEvents = true
@@ -121,26 +111,30 @@ public class StreamSocket : CustomDebugStringConvertible {
             if bytesRead < buf.count {
                 buf = buf.subdata(in: 0..<bytesRead)
             }
+
+            if readBuffer != nil {
+                readBuffer!.append(buf)
+            } else {
+                readBuffer = buf
+            }
+
+            if readBuffer!.count >= needed {
+                let result = readBuffer!
+                item.completion(result)
+
+                readBuffer = nil
+                _ = readQueue.removeFirst()
+            }
+
+            wantReadEvents = readQueue.count > 0
+
         } catch let e {
             if let pe = e as? POSIXError, [EWOULDBLOCK,EAGAIN].contains(pe.code) {
+                wantReadEvents = true
                 return
             }
             didDisconnect()
             return
-        }
-
-        if readBuffer != nil {
-            readBuffer!.append(buf)
-        } else {
-            readBuffer = buf
-        }
-
-        if readBuffer!.count >= needed {
-            let result = readBuffer!
-            item.completion(result)
-
-            readBuffer = nil
-            _ = readQueue.removeFirst()
         }
     }
 
@@ -160,8 +154,10 @@ public class StreamSocket : CustomDebugStringConvertible {
             } else if bytesWritten > 0 {
                 writeQueue[0] = item.subdata(in: bytesWritten..<item.count)
             }
+            wantWriteEvents = writeQueue.count > 0
         } catch let e {
             if let pe = e as? POSIXError, [EWOULDBLOCK,EAGAIN].contains(pe.code) {
+                wantWriteEvents = true
                 return
             }
             didDisconnect()
