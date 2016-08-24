@@ -122,55 +122,70 @@ public struct Socket6 : CustomDebugStringConvertible {
         return Socket6(fd: result)
     }
 
+    public struct MessageFlags : OptionSet {
+        public init(rawValue: Int32) { self.rawValue = rawValue }
+        public let rawValue: Int32
 
-    public func send(buffer: UnsafeRawPointer, length: Int, flags: Int32 = 0) throws -> Int {
-        let result = sock_send(fd, buffer, length, flags)
+        //Only the intersection of Linux & Mac flags for now
+        static let oob          = MessageFlags(rawValue: Int32(MSG_OOB))
+        static let peek         = MessageFlags(rawValue: Int32(MSG_PEEK))
+        static let dontRoute    = MessageFlags(rawValue: Int32(MSG_DONTROUTE))
+        static let eor          = MessageFlags(rawValue: Int32(MSG_EOR))
+        static let trunc        = MessageFlags(rawValue: Int32(MSG_TRUNC))
+        static let ctrunc       = MessageFlags(rawValue: Int32(MSG_CTRUNC))
+        static let waitAll      = MessageFlags(rawValue: Int32(MSG_WAITALL))
+        static let dontWait     = MessageFlags(rawValue: Int32(MSG_DONTWAIT))
+    }
+
+
+    public func send(buffer: UnsafeRawPointer, length: Int, flags: MessageFlags = []) throws -> Int {
+        let result = sock_send(fd, buffer, length, flags.rawValue)
         try check(result)
         return Int(result)
     }
 
-    public func send(buffer: Data, flags: Int32 = 0) throws -> Int {
-        let result = buffer.withUnsafeBytes { sock_send(fd, $0, buffer.count, flags) }
+    public func send(buffer: Data, flags: MessageFlags = []) throws -> Int {
+        let result = buffer.withUnsafeBytes { sock_send(fd, $0, buffer.count, flags.rawValue) }
         try check(result)
         return Int(result)
     }
 
-    public func send(buffer: UnsafeRawPointer, length: Int, to address: sockaddr_in6, flags: Int32 = 0) throws -> Int {
-        let result = address.withSockaddr { sock_sendto(fd, buffer, length, flags, $0, $1) }
+    public func send(buffer: UnsafeRawPointer, length: Int, to address: sockaddr_in6, flags: MessageFlags = []) throws -> Int {
+        let result = address.withSockaddr { sock_sendto(fd, buffer, length, flags.rawValue, $0, $1) }
         try check(result)
         return Int(result)
     }
 
-    public func send(buffer: Data, to address: sockaddr_in6, flags: Int32 = 0) throws -> Int {
+    public func send(buffer: Data, to address: sockaddr_in6, flags: MessageFlags = []) throws -> Int {
         return try buffer.withUnsafeBytes { try send(buffer: $0, length: buffer.count, to: address, flags: flags) }
     }
 
-    public func recv(buffer: UnsafeMutableRawPointer, length: Int, flags: Int32 = 0) throws -> Int {
-        let result = sock_recv(fd, buffer, length, flags)
+    public func recv(buffer: UnsafeMutableRawPointer, length: Int, flags: MessageFlags = []) throws -> Int {
+        let result = sock_recv(fd, buffer, length, flags.rawValue)
         try check(result)
         return Int(result)
     }
 
-    public func recv(length: Int, flags: Int32 = 0) throws -> Data {
+    public func recv(length: Int, flags: MessageFlags = []) throws -> Data {
         var buffer = Data(count: length)
-        let result = buffer.withUnsafeMutableBytes { sock_recv(fd, $0, length, flags) }
+        let result = buffer.withUnsafeMutableBytes { sock_recv(fd, $0, length, flags.rawValue) }
         try check(result)
         return result == buffer.count ? buffer : buffer.subdata(in: 0..<result)
     }
 
-    public func recvfrom(buffer: UnsafeMutableRawPointer, length: Int, flags: Int32 = 0) throws -> (Int,sockaddr_in6) {
+    public func recvfrom(buffer: UnsafeMutableRawPointer, length: Int, flags: MessageFlags = []) throws -> (Int,sockaddr_in6) {
         var addr = sockaddr_in6()
-        let result = addr.withMutableSockaddr { sock_recvfrom(fd, buffer, length, flags, $0, $1) }
+        let result = addr.withMutableSockaddr { sock_recvfrom(fd, buffer, length, flags.rawValue, $0, $1) }
         try check(result)
         return (result, addr)
     }
 
-    public func recvfrom(length: Int, flags: Int32 = 0) throws -> (Data,sockaddr_in6) {
+    public func recvfrom(length: Int, flags: MessageFlags = []) throws -> (Data,sockaddr_in6) {
         var buffer = Data(count: length)
         var address = sockaddr_in6()
         let result = buffer.withUnsafeMutableBytes { bytes in
             return address.withMutableSockaddr { addr, addrlen in
-                return sock_recvfrom(fd, bytes, length, flags, addr, addrlen)
+                return sock_recvfrom(fd, bytes, length, flags.rawValue, addr, addrlen)
             }
         }
         try check(result)

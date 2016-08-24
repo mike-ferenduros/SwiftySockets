@@ -74,7 +74,7 @@ public class DatagramSocket : CustomDebugStringConvertible {
     private func readDatagrams() {
         guard isOpen else { return }
 
-        while let (data,sender) = try? socket.recvfrom(length: self.maxReadSize, flags: Int32(MSG_DONTWAIT)) {
+        while let (data,sender) = try? socket.recvfrom(length: self.maxReadSize, flags: [.dontWait]) {
             self.delegate?.datagramSocket(self, didReceive: data, from: sender)
         }
     }
@@ -84,9 +84,9 @@ public class DatagramSocket : CustomDebugStringConvertible {
     public func send(data: Data, to addr: sockaddr_in6?) {
         guard isOpen else { return }
         if let addr = addr {
-            _ = try? socket.send(buffer: data, to: addr, flags: Int32(MSG_DONTWAIT))
+            _ = try? socket.send(buffer: data, to: addr, flags: [.dontWait])
         } else {
-            _ = try? socket.send(buffer: data, flags: Int32(MSG_DONTWAIT))
+            _ = try? socket.send(buffer: data, flags: [.dontWait])
         }
     }
 }
