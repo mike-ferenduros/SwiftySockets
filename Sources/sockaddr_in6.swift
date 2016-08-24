@@ -129,6 +129,15 @@ extension sockaddr_in6 : Equatable, CustomDebugStringConvertible {
 
     ///Initialise with zero (=wildcard) address.
     public init() {
+        #if os(Linux)
+        self.init(
+            sin6_family: sa_family_t(AF_INET6),
+            sin6_port: 0,
+            sin6_flowinfo: 0,
+            sin6_addr: in6_addr.any,
+            sin6_scope_id: 0
+        )
+        #else
         self.init(
             sin6_len: UInt8(MemoryLayout<sockaddr_in6>.size),
             sin6_family: sa_family_t(AF_INET6),
@@ -137,6 +146,7 @@ extension sockaddr_in6 : Equatable, CustomDebugStringConvertible {
             sin6_addr: in6_addr.any,
             sin6_scope_id: 0
         )
+        #endif
     }
 
     public init(addr: in6_addr, port: UInt16) {
@@ -189,7 +199,9 @@ extension sockaddr_in6 : Equatable, CustomDebugStringConvertible {
                 let sa6 = sa.withMemoryRebound(to: sockaddr_in6.self, capacity: 1) { return $0.pointee }
                 self = sa6
                 self.sin6_family = sa_family_t(AF_INET6)
+                #if !os(Linux)
                 self.sin6_len = UInt8(MemoryLayout<sockaddr_in6>.size)
+                #endif
 
             case AF_INET:
                 guard Int(ai.ai_addrlen) == MemoryLayout<sockaddr_in>.size else { return nil }
@@ -246,7 +258,11 @@ extension sockaddr_in6 {
         let cstr = hostname.cString(using: .utf8)
         let port = "\(port)".cString(using: .utf8)
         var addresses: UnsafeMutablePointer<addrinfo>?
+        #if os(Linux)
+        var hint = addrinfo(ai_flags: 0, ai_family: Int32(AF_INET6), ai_socktype: 0, ai_protocol: 0, ai_addrlen: 0, ai_addr: nil, ai_canonname: nil, ai_next: nil)
+        #else
         var hint = addrinfo(ai_flags: 0, ai_family: Int32(AF_INET6), ai_socktype: 0, ai_protocol: 0, ai_addrlen: 0, ai_canonname: nil, ai_addr: nil, ai_next: nil)
+        #endif
         var results: [sockaddr_in6] = []
 
         guard sock_getaddrinfo(cstr, port, &hint, &addresses) == 0  else { throw POSIXError(errno) }

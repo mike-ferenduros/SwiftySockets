@@ -15,22 +15,18 @@ protocol LocalizedError : Error { }
 
 public struct POSIXError : LocalizedError, Equatable, CustomDebugStringConvertible {
 
-    public let code: POSIXErrorCode
+    public let code: Int32
 
     public var errorDescription: String? {
-        return String(cString: strerror(code.rawValue))
+        return String(cString: strerror(code))
     }
 
     public var debugDescription: String {
-        return "POSIXError(\(code.rawValue)): \(errorDescription!)"
-    }
-
-    public init(_ code: POSIXErrorCode) {
-        self.code = code
+        return "POSIXError(\(code)): \(errorDescription!)"
     }
 
     public init(_ code: Int32) {
-        self.code = POSIXErrorCode(rawValue:code)!
+        self.code = code
     }
 
     public static func ==(lhs: POSIXError, rhs: POSIXError) -> Bool {
