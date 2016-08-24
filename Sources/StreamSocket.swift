@@ -39,31 +39,25 @@ public class StreamSocket : CustomDebugStringConvertible {
         wsource = DispatchSource.makeWriteSource(fileDescriptor: self.socket.fd, queue: DispatchQueue.main)
 
         rsource.setEventHandler { [weak self] in self?.tryRead() }
-
         wsource.setEventHandler { [weak self] in self?.tryWrite() }
-
-        wantReadEvents = true
-        wantWriteEvents = true
     }
 
-    var wantReadEvents = false {
+    private var wantReadEvents = false {
         didSet {
-            if wantReadEvents == oldValue { return }
-            if wantReadEvents {
-                rsource.resume()
-            } else {
-                rsource.suspend()
+            switch (oldValue, wantReadEvents) {
+                case (true, false): rsource.suspend()
+                case (false, true): rsource.resume()
+                default: break
             }
         }
     }
 
-    var wantWriteEvents = false {
+    private var wantWriteEvents = false {
         didSet {
-            if wantWriteEvents == oldValue { return }
-            if wantWriteEvents {
-                wsource.resume()
-            } else {
-                wsource.suspend()
+            switch (oldValue, wantWriteEvents) {
+                case (true, false): wsource.suspend()
+                case (false, true): wsource.resume()
+                default: break
             }
         }
     }
@@ -105,7 +99,7 @@ public class StreamSocket : CustomDebugStringConvertible {
 
         var buf = Data(count: wanted)
         do {
-            let bytesRead = try buf.withUnsafeMutableBytes { return try socket.recv(buffer: $0, length: buf.count) }
+            let bytesRead = try buf.withUnsafeMutableBytes { return try socket.recv(buffer: $0, length: buf.count, flags: .dontWait) }
 
             if bytesRead <= 0 { return }
             if bytesRead < buf.count {
@@ -131,9 +125,9 @@ public class StreamSocket : CustomDebugStringConvertible {
         } catch let e {
             if let pe = e as? POSIXError, [EWOULDBLOCK,EAGAIN].contains(pe.code) {
                 wantReadEvents = true
-                return
+            } else {
+                didDisconnect()
             }
-            didDisconnect()
             return
         }
     }
@@ -158,10 +152,9 @@ public class StreamSocket : CustomDebugStringConvertible {
         } catch let e {
             if let pe = e as? POSIXError, [EWOULDBLOCK,EAGAIN].contains(pe.code) {
                 wantWriteEvents = true
-                return
+            } else {
+                didDisconnect()
             }
-            didDisconnect()
-            return
         }
     }
 
