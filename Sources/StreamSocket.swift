@@ -62,8 +62,8 @@ public class StreamSocket : CustomDebugStringConvertible {
         #if os(Linux)
         let revents = kCFStreamEventHasBytesAvailable | kCFStreamEventErrorOccurred | kCFStreamEventEndEncountered
         let wevents = kCFStreamEventCanAcceptBytes | kCFStreamEventErrorOccurred | kCFStreamEventEndEncountered
-        CFReadStreamSetClient(rstream, revents, CFStreamEventType(rcallback), &callbackContext)
-        CFWriteStreamSetClient(wstream, wevents, CFStreamEventType(wcallback), &callbackContext)
+        CFReadStreamSetClient(rstream, CFStreamEventType(revents), rcallback, &callbackContext)
+        CFWriteStreamSetClient(wstream, CFStreamEventType(wevents), wcallback, &callbackContext)
         #else
         let revents: CFStreamEventType = [.hasBytesAvailable, .errorOccurred, .endEncountered]
         let wevents: CFStreamEventType = [.canAcceptBytes, .errorOccurred, .endEncountered]
