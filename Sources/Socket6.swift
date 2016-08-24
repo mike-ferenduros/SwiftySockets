@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import Dispatch
 
 
 private let sock_close = close
@@ -64,9 +65,15 @@ public struct Socket6 : CustomDebugStringConvertible {
         self.fd = fd
     }
 
-    ///Initialise with the desired type (usually SOCK_STREAM or SOCK_DGRAM)
-    public init(type: Int32 = Int32(SOCK_STREAM)) {
-        self.init(fd: socket(Int32(AF_INET6), type, 0))
+    ///Initialise with the desired type
+    public enum SocketType { case raw, stream, datagram }
+    public init(type: SocketType = .stream) {
+        let stype = [.raw: SOCK_RAW, .stream: SOCK_STREAM, .datagram: SOCK_DGRAM][type]!
+        #if os(Linux)
+        self.init(fd: socket(AF_INET6, Int32(stype.rawValue), 0))
+        #else
+        self.init(fd: socket(AF_INET6, stype, 0))
+        #endif
     }
 
     public func close() throws {

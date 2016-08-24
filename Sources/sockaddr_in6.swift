@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import Dispatch
 
 
 //When strict typing meets a crufty API...

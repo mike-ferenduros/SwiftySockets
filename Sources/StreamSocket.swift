@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import Dispatch
 import CoreFoundation
 
 
@@ -181,7 +182,7 @@ public class StreamSocket : CustomDebugStringConvertible {
 extension StreamSocket {
     public static func connect(to address: sockaddr_in6, completion: @escaping (StreamSocket?,Error?)->()) {
 
-        let sock = Socket6(type: Int32(SOCK_STREAM))
+        let sock = Socket6(type: .stream)
 
         DispatchQueue.global().async {
             do {
@@ -220,7 +221,7 @@ public class ListenSocket : CustomDebugStringConvertible {
     public func listen(address: sockaddr_in6, accept: @escaping (Socket6)->()) throws {
         cancel()
 
-        socket = Socket6(type: Int32(SOCK_STREAM))
+        socket = Socket6(type: .stream)
         try socket!.bind(to: address)
 
         source = DispatchSource.makeReadSource(fileDescriptor: socket!.fd, queue: DispatchQueue.main)
