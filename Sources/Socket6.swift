@@ -127,14 +127,14 @@ public struct Socket6 : CustomDebugStringConvertible {
         public let rawValue: Int32
 
         //Only the intersection of Linux & Mac flags for now
-        static let oob          = MessageFlags(rawValue: Int32(MSG_OOB))
-        static let peek         = MessageFlags(rawValue: Int32(MSG_PEEK))
-        static let dontRoute    = MessageFlags(rawValue: Int32(MSG_DONTROUTE))
-        static let eor          = MessageFlags(rawValue: Int32(MSG_EOR))
-        static let trunc        = MessageFlags(rawValue: Int32(MSG_TRUNC))
-        static let ctrunc       = MessageFlags(rawValue: Int32(MSG_CTRUNC))
-        static let waitAll      = MessageFlags(rawValue: Int32(MSG_WAITALL))
-        static let dontWait     = MessageFlags(rawValue: Int32(MSG_DONTWAIT))
+        public static let oob          = MessageFlags(rawValue: Int32(MSG_OOB))
+        public static let peek         = MessageFlags(rawValue: Int32(MSG_PEEK))
+        public static let dontRoute    = MessageFlags(rawValue: Int32(MSG_DONTROUTE))
+        public static let eor          = MessageFlags(rawValue: Int32(MSG_EOR))
+        public static let trunc        = MessageFlags(rawValue: Int32(MSG_TRUNC))
+        public static let ctrunc       = MessageFlags(rawValue: Int32(MSG_CTRUNC))
+        public static let waitAll      = MessageFlags(rawValue: Int32(MSG_WAITALL))
+        public static let dontWait     = MessageFlags(rawValue: Int32(MSG_DONTWAIT))
     }
 
 
