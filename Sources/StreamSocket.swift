@@ -84,6 +84,8 @@ public class StreamSocket : CustomDebugStringConvertible {
     }
 
     private func handle(event: CFStreamEventType) {
+        guard isOpen else { return }
+
         #if os(Linux)
         let readEvent = (event & CFStreamEventType(kCFStreamEventHasBytesAvailable)) != 0
         let writeEvent = (event & CFStreamEventType(kCFStreamEventCanAcceptBytes)) != 0
@@ -119,12 +121,15 @@ public class StreamSocket : CustomDebugStringConvertible {
             CFReadStreamClose(rstream)
             CFWriteStreamClose(wstream)
             try? socket.close()
+            readQueue.removeAll()
+            writeQueue.removeAll()
+            readBuffer = nil
             isOpen = false
         }
     }
 
 
-    private var readQueue: [(min: Int, max: Int, completion:(Data?)->())] = []
+    private var readQueue: [(min: Int, max: Int, completion:(Data)->())] = []
     private var readBuffer: Data?
     private func tryRead() {
 
@@ -178,22 +183,26 @@ public class StreamSocket : CustomDebugStringConvertible {
         }
     }
 
-    public func read(_ count: Int, completion: @escaping (Data?)->()) {
+    public func read(_ count: Int, completion: @escaping (Data)->()) {
+        guard isOpen else { return }
         readQueue.append((min: count, max: count, completion: completion))
         tryRead()
     }
 
-    public func read(max: Int, completion: @escaping (Data?)->()) {
+    public func read(max: Int, completion: @escaping (Data)->()) {
+        guard isOpen else { return }
         readQueue.append((min: 1, max: max, completion: completion))
         tryRead()
     }
 
-    public func read(min: Int, max: Int, completion: @escaping (Data?)->()) {
+    public func read(min: Int, max: Int, completion: @escaping (Data)->()) {
+        guard isOpen else { return }
         readQueue.append((min: min, max: max, completion: completion))
         tryRead()
     }
 
     public func write(_ data: Data) {
+        guard isOpen else { return }
         writeQueue.append(data)
         tryWrite()
     }
