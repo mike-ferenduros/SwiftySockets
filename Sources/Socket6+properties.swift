@@ -27,7 +27,7 @@ extension Socket6 {
 
 
     ///Returns and clears the current error (hence a function not a property)
-    func getError() -> POSIXError? {
+    public func getError() -> POSIXError? {
         guard let e = try? getsockopt(SOL_SOCKET, SO_ERROR, Int32.self) else { return nil }
         return e < 0 ? POSIXError(e) : nil
     }
@@ -41,19 +41,19 @@ extension Socket6 {
         try setsockopt(level, option, value ? Int32(1) : Int32(0))
     }
 
-    var reuseAddress: Bool {
+    public var reuseAddress: Bool {
         get { return (try? getboolopt(SOL_SOCKET, SO_REUSEADDR)) ?? false }
         set { try? setboolopt(SOL_SOCKET, SO_REUSEADDR, newValue) }
     }
-    var keepAlive: Bool {
+    public var keepAlive: Bool {
         get { return (try? getboolopt(SOL_SOCKET, SO_KEEPALIVE)) ?? false }
         set { try? setboolopt(SOL_SOCKET, SO_KEEPALIVE, newValue) }
     }
-    var broadcast: Bool {
+    public var broadcast: Bool {
         get { return (try? getboolopt(SOL_SOCKET, SO_BROADCAST)) ?? false }
         set { try? setboolopt(SOL_SOCKET, SO_BROADCAST, newValue) }
     }
-    var noDelay: Bool {
+    public var noDelay: Bool {
         get { return (try? getboolopt(Int32(IPPROTO_TCP), TCP_NODELAY)) ?? false }
         set { try? setboolopt(Int32(IPPROTO_TCP), TCP_NODELAY, newValue) }
     }
