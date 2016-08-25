@@ -44,6 +44,7 @@ public class StreamSocket : CustomDebugStringConvertible {
 
     private var wantReadEvents = false {
         didSet {
+            guard isOpen else { return }
             switch (oldValue, wantReadEvents) {
                 case (true, false): rsource.suspend()
                 case (false, true): rsource.resume()
@@ -54,6 +55,7 @@ public class StreamSocket : CustomDebugStringConvertible {
 
     private var wantWriteEvents = false {
         didSet {
+            guard isOpen else { return }
             switch (oldValue, wantWriteEvents) {
                 case (true, false): wsource.suspend()
                 case (false, true): wsource.resume()
@@ -118,10 +120,9 @@ public class StreamSocket : CustomDebugStringConvertible {
 
             if readBuffer!.count >= needed {
                 let result = readBuffer!
-                item.completion(result)
-
                 readBuffer = nil
                 _ = readQueue.removeFirst()
+                item.completion(result)
             }
 
             wantReadEvents = readQueue.count > 0
@@ -132,7 +133,6 @@ public class StreamSocket : CustomDebugStringConvertible {
             } else {
                 didDisconnect()
             }
-            return
         }
     }
 
@@ -165,25 +165,25 @@ public class StreamSocket : CustomDebugStringConvertible {
     public func read(_ count: Int, completion: @escaping (Data)->()) {
         guard isOpen else { return }
         readQueue.append((min: count, max: count, completion: completion))
-        tryRead()
+        wantReadEvents = true
     }
 
     public func read(max: Int, completion: @escaping (Data)->()) {
         guard isOpen else { return }
         readQueue.append((min: 1, max: max, completion: completion))
-        tryRead()
+        wantReadEvents = true
     }
 
     public func read(min: Int, max: Int, completion: @escaping (Data)->()) {
         guard isOpen else { return }
         readQueue.append((min: min, max: max, completion: completion))
-        tryRead()
+        wantReadEvents = true
     }
 
     public func write(_ data: Data) {
         guard isOpen else { return }
         writeQueue.append(data)
-        tryWrite()
+        wantWriteEvents = true
     }
 }
 
