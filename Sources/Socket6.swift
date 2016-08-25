@@ -93,10 +93,13 @@ public struct Socket6 : CustomDebugStringConvertible {
         try check(result)
     }
 
-    public func getsockopt<T>(_ level: Int32, _ option: Int32, _ value: inout T) throws {
+    public func getsockopt<T>(_ level: Int32, _ option: Int32, _ type: T.Type) throws -> T {
         var len = socklen_t(MemoryLayout<T>.size)
+        let buf = Data(count: MemoryLayout<T>.size)
+        var value: T = buf.withUnsafeBytes { $0.pointee }
         let result = sock_getsockopt(fd, level, option, &value, &len)
         try check(result)
+        return value
     }
 
     public func bind(to address: sockaddr_in6) throws {
