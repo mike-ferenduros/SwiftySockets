@@ -213,7 +213,7 @@ extension StreamSocket {
 
 public class ListenSocket : CustomDebugStringConvertible {
 
-    private(set) public var socket: Socket6?
+    private var socket: Socket6?
     private var source: DispatchSourceRead?
     
     public var debugDescription: String {
@@ -224,14 +224,17 @@ public class ListenSocket : CustomDebugStringConvertible {
         //default init() is internal, not public
     }
 
-    public func listen(port: UInt16, accept: @escaping (Socket6)->()) throws {
-        try listen(address: sockaddr_in6.any(port: port), accept: accept)
+    public func listen(port: UInt16, reuseAddress: Bool = false, accept: @escaping (Socket6)->()) throws {
+        try listen(address: sockaddr_in6.any(port: port), reuseAddress: reuseAddress, accept: accept)
     }
 
-    public func listen(address: sockaddr_in6, accept: @escaping (Socket6)->()) throws {
+    public func listen(address: sockaddr_in6, reuseAddress: Bool = false, accept: @escaping (Socket6)->()) throws {
         cancel()
 
         socket = Socket6(type: .stream)
+        if reuseAddress {
+            try? socket!.setsockopt(SOL_SOCKET, SO_REUSEADDR, UInt32(1))
+        }
         try socket!.bind(to: address)
 
         source = DispatchSource.makeReadSource(fileDescriptor: socket!.fd, queue: DispatchQueue.main)
