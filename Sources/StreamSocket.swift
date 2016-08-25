@@ -101,7 +101,11 @@ public class StreamSocket : CustomDebugStringConvertible {
         do {
             let bytesRead = try buf.withUnsafeMutableBytes { return try socket.recv(buffer: $0, length: buf.count, flags: .dontWait) }
 
-            if bytesRead <= 0 { return }
+            if bytesRead <= 0 {
+                didDisconnect()
+                return
+            }
+
             if bytesRead < buf.count {
                 buf = buf.subdata(in: 0..<bytesRead)
             }
