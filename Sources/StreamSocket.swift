@@ -122,7 +122,7 @@ public class StreamSocket : CustomDebugStringConvertible {
                 let result = readBuffer!
                 readBuffer = nil
                 _ = readQueue.removeFirst()
-                item.completion(result)
+                DispatchQueue.main.async { item.completion(result) }
             }
 
             wantReadEvents = readQueue.count > 0
@@ -165,25 +165,25 @@ public class StreamSocket : CustomDebugStringConvertible {
     public func read(_ count: Int, completion: @escaping (Data)->()) {
         guard isOpen else { return }
         readQueue.append((min: count, max: count, completion: completion))
-        wantReadEvents = true
+        tryRead()
     }
 
     public func read(max: Int, completion: @escaping (Data)->()) {
         guard isOpen else { return }
         readQueue.append((min: 1, max: max, completion: completion))
-        wantReadEvents = true
+        tryRead()
     }
 
     public func read(min: Int, max: Int, completion: @escaping (Data)->()) {
         guard isOpen else { return }
         readQueue.append((min: min, max: max, completion: completion))
-        wantReadEvents = true
+        tryRead()
     }
 
     public func write(_ data: Data) {
         guard isOpen else { return }
         writeQueue.append(data)
-        wantWriteEvents = true
+        tryWrite()
     }
 }
 
