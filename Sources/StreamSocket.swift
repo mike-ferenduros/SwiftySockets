@@ -233,7 +233,7 @@ public class ListenSocket : CustomDebugStringConvertible {
 
         socket = Socket6(type: .stream)
         if reuseAddress {
-            try? socket!.setsockopt(SOL_SOCKET, SO_REUSEADDR, UInt32(1))
+            socket!.reuseAddress = true
         }
         try socket!.bind(to: address)
 

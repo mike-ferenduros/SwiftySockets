@@ -46,20 +46,6 @@ public struct Socket6 : CustomDebugStringConvertible {
     public let fd: Int32
 
 
-    ///The socket's locally bound address, or zeroes if not applicable
-    public var sockname: sockaddr_in6 {
-        var address = sockaddr_in6()
-        _ = address.withMutableSockaddr { getsockname(fd, $0, $1) }
-        return address
-    }
-
-    ///The socket's connected address, or nil if the socket is not connected or an error occurs
-    public var peername: sockaddr_in6? {
-        var address = sockaddr_in6()
-        let result = address.withMutableSockaddr { getpeername(fd, $0, $1) }
-        return result == 0 ? address : nil
-    }
-
     ///Initialise with an existing descriptor
     public init(fd: Int32) {
         self.fd = fd

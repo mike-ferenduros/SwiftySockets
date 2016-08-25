@@ -23,6 +23,10 @@
 		770A96E91D53EEB000F35198 /* sockaddr_in6.swift in Sources */ = {isa = PBXBuildFile; fileRef = 770A96771D53E0EB00F35198 /* sockaddr_in6.swift */; };
 		770A96EA1D53EEB000F35198 /* Socket6.swift in Sources */ = {isa = PBXBuildFile; fileRef = 770A96781D53E0EB00F35198 /* Socket6.swift */; };
 		770A96EB1D53EEB000F35198 /* StreamSocket.swift in Sources */ = {isa = PBXBuildFile; fileRef = 770A96791D53E0EB00F35198 /* StreamSocket.swift */; };
+		777563DC1D6F792C001581B7 /* Socket6+properties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 777563DB1D6F792C001581B7 /* Socket6+properties.swift */; };
+		777563DD1D6F792C001581B7 /* Socket6+properties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 777563DB1D6F792C001581B7 /* Socket6+properties.swift */; };
+		777563DE1D6F792C001581B7 /* Socket6+properties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 777563DB1D6F792C001581B7 /* Socket6+properties.swift */; };
+		777563DF1D6F792C001581B7 /* Socket6+properties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 777563DB1D6F792C001581B7 /* Socket6+properties.swift */; };
 		77ACDFF71D588A53000349B1 /* POSIXError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77ACDFF61D588A53000349B1 /* POSIXError.swift */; };
 		77ACDFF81D588A53000349B1 /* POSIXError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77ACDFF61D588A53000349B1 /* POSIXError.swift */; };
 		77ACDFF91D588A53000349B1 /* POSIXError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77ACDFF61D588A53000349B1 /* POSIXError.swift */; };
@@ -38,6 +42,7 @@
 		770A96BE1D53EE4300F35198 /* SwiftySockets.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = SwiftySockets.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		770A96CB1D53EE8C00F35198 /* SwiftySockets.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = SwiftySockets.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		770A96D81D53EE9F00F35198 /* SwiftySockets.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = SwiftySockets.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		777563DB1D6F792C001581B7 /* Socket6+properties.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Socket6+properties.swift"; sourceTree = "<group>"; };
 		77ACDFB41D540E05000349B1 /* Info_iOS.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info_iOS.plist; sourceTree = "<group>"; };
 		77ACDFB51D540E05000349B1 /* Info_macOS.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info_macOS.plist; sourceTree = "<group>"; };
 		77ACDFB61D540E05000349B1 /* Info_tvOS.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info_tvOS.plist; sourceTree = "<group>"; };
@@ -105,6 +110,7 @@
 				77ACDFF61D588A53000349B1 /* POSIXError.swift */,
 				770A96771D53E0EB00F35198 /* sockaddr_in6.swift */,
 				770A96781D53E0EB00F35198 /* Socket6.swift */,
+				777563DB1D6F792C001581B7 /* Socket6+properties.swift */,
 				770A96761D53E0EB00F35198 /* DatagramSocket.swift */,
 				770A96791D53E0EB00F35198 /* StreamSocket.swift */,
 			);
@@ -317,6 +323,7 @@
 				77ACDFF71D588A53000349B1 /* POSIXError.swift in Sources */,
 				770A96B81D53EE2A00F35198 /* StreamSocket.swift in Sources */,
 				770A96B71D53EE2A00F35198 /* Socket6.swift in Sources */,
+				777563DC1D6F792C001581B7 /* Socket6+properties.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -329,6 +336,7 @@
 				77ACDFF81D588A53000349B1 /* POSIXError.swift in Sources */,
 				770A96E31D53EEAF00F35198 /* StreamSocket.swift in Sources */,
 				770A96E21D53EEAF00F35198 /* Socket6.swift in Sources */,
+				777563DD1D6F792C001581B7 /* Socket6+properties.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -341,6 +349,7 @@
 				77ACDFF91D588A53000349B1 /* POSIXError.swift in Sources */,
 				770A96E71D53EEB000F35198 /* StreamSocket.swift in Sources */,
 				770A96E61D53EEB000F35198 /* Socket6.swift in Sources */,
+				777563DF1D6F792C001581B7 /* Socket6+properties.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -353,6 +362,7 @@
 				77ACDFFA1D588A53000349B1 /* POSIXError.swift in Sources */,
 				770A96EB1D53EEB000F35198 /* StreamSocket.swift in Sources */,
 				770A96EA1D53EEB000F35198 /* Socket6.swift in Sources */,
+				777563DE1D6F792C001581B7 /* Socket6+properties.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
