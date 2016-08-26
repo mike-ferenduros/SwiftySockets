@@ -43,6 +43,7 @@ public class StreamSocket : Hashable, CustomDebugStringConvertible, DispatchSock
     }
 
     public func dispatchSocketIsReadable(_socket: DispatchSocket, count: Int) {
+        guard isOpen else { return }
         do {
             try doRead(available: count)
         } catch POSIXError(EWOULDBLOCK) {
@@ -56,6 +57,7 @@ public class StreamSocket : Hashable, CustomDebugStringConvertible, DispatchSock
     }
 
     public func dispatchSocketIsWritable(_socket: DispatchSocket) {
+        guard isOpen else { return }
         do {
             try doWrite()
         } catch POSIXError(EWOULDBLOCK) {
@@ -109,13 +111,15 @@ public class StreamSocket : Hashable, CustomDebugStringConvertible, DispatchSock
 
     private func doWrite() throws {
 
-        guard let item = writeQueue.first else { return }
-        let bytesWritten = try socket.send(buffer: item, flags: .dontWait)
+        while let item = writeQueue.first {
+            let bytesWritten = try socket.send(buffer: item, flags: .dontWait)
 
-        if bytesWritten == item.count {
-            _ = writeQueue.removeFirst()
-        } else if bytesWritten > 0 {
-            writeQueue[0] = item.subdata(in: bytesWritten..<item.count)
+            if bytesWritten == item.count {
+                _ = writeQueue.removeFirst()
+            } else if bytesWritten > 0 {
+                writeQueue[0] = item.subdata(in: bytesWritten..<item.count)
+                break
+            }
         }
     }
 
@@ -143,6 +147,10 @@ public class StreamSocket : Hashable, CustomDebugStringConvertible, DispatchSock
         guard isOpen else { return }
         writeQueue.append(data)
         dsock.notifyWritable = true
+        #if os(Linux)
+        //Nasty hack - writable events not being delivered on Linux right now
+        DispatchQueue.main.async { self.dispatchSocketIsWritable(_socket: self.dsock) }
+        #endif
     }
 }
 
