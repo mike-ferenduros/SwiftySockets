@@ -8,10 +8,6 @@
 
 import Foundation
 
-#if os(Linux)
-protocol LocalizedError : Error { }
-#endif
-
 
 public struct POSIXError : LocalizedError, Equatable, CustomDebugStringConvertible {
 
