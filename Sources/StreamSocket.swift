@@ -18,82 +18,65 @@ public protocol StreamSocketDelegate {
 /**
     Buffered, async TCP
 */
-public class StreamSocket : Hashable, CustomDebugStringConvertible {
+public class StreamSocket : Hashable, CustomDebugStringConvertible, DispatchSocketDelegate {
 
-    public let socket: Socket6
+    private let dsock: DispatchSocket
+    public var socket: Socket6 { return dsock.socket }
+    public var isOpen: Bool { return dsock.isOpen }
 
-    public var hashValue: Int { return self.socket.hashValue }
+    public var hashValue: Int { return dsock.hashValue }
     public static func ==(lhs: StreamSocket, rhs: StreamSocket) -> Bool { return lhs === rhs }
 
-    private let rsource: DispatchSourceRead
-    private let wsource: DispatchSourceWrite
     public var delegate: StreamSocketDelegate?
 
-    public private(set) var isOpen = true
-
     public var debugDescription: String {
-        return "\(isOpen ? "Open" : "Closed") StreamSocket \(socket)"
+        return "StreamSocket(\(dsock))"
     }
 
     public init(socket: Socket6, delegate: StreamSocketDelegate? = nil) {
-        self.socket = socket
-        self.delegate = delegate
-        rsource = DispatchSource.makeReadSource(fileDescriptor: self.socket.fd, queue: DispatchQueue.main)
-        wsource = DispatchSource.makeWriteSource(fileDescriptor: self.socket.fd, queue: DispatchQueue.main)
-
-        rsource.setEventHandler { [weak self] in self?.tryRead() }
-        wsource.setEventHandler { [weak self] in self?.tryWrite() }
-    }
-
-    private var wantReadEvents = false {
-        didSet {
-            guard isOpen else { return }
-            switch (oldValue, wantReadEvents) {
-                case (true, false): rsource.suspend()
-                case (false, true): rsource.resume()
-                default: break
-            }
-        }
-    }
-
-    private var wantWriteEvents = false {
-        didSet {
-            guard isOpen else { return }
-            switch (oldValue, wantWriteEvents) {
-                case (true, false): wsource.suspend()
-                case (false, true): wsource.resume()
-                default: break
-            }
-        }
-    }
-
-    deinit {
-        close()
-    }
-    
-    private func didDisconnect() {
-        close()
-        self.delegate?.streamSocketDidDisconnect(self)
+        dsock = DispatchSocket(socket: socket)
+        dsock.delegate = self
     }
 
     public func close() {
-        if isOpen {
-            rsource.cancel()
-            wsource.cancel()
-            try? socket.close()
-            readQueue.removeAll()
-            writeQueue.removeAll()
-            readBuffer = nil
-            isOpen = false
-        }
+        dsock.close()
     }
 
+    public func dispatchSocketIsReadable(_socket: DispatchSocket, count: Int) {
+        do {
+            try doRead(available: count)
+        } catch POSIXError(EWOULDBLOCK) {
+            /* don't care */
+        } catch {
+            close()
+            self.delegate?.streamSocketDidDisconnect(self)
+            return
+        }
+        dsock.notifyReadable = readQueue.count > 0
+    }
+
+    public func dispatchSocketIsWritable(_socket: DispatchSocket) {
+        do {
+            try doWrite()
+        } catch POSIXError(EWOULDBLOCK) {
+            /* don't care */
+        } catch {
+            close()
+            self.delegate?.streamSocketDidDisconnect(self)
+            return
+        }
+        dsock.notifyWritable = writeQueue.count > 0
+    }
+
+    public func dispatchSocketDisconnected(_socket: DispatchSocket) {
+        delegate?.streamSocketDidDisconnect(self)
+    }
 
     private var readQueue: [(min: Int, max: Int, completion:(Data)->())] = []
     private var readBuffer: Data?
-    private func tryRead() {
+    private func doRead(available: Int) throws {
 
-        guard isOpen, let item = readQueue.first else { return }
+        guard let item = readQueue.first else { return }
 
         var needed = item.min
         var wanted = item.max
@@ -102,40 +85,21 @@ public class StreamSocket : Hashable, CustomDebugStringConvertible {
             wanted -= r.count
         }
 
-        var buf = Data(count: wanted)
-        do {
-            let bytesRead = try buf.withUnsafeMutableBytes { return try socket.recv(buffer: $0, length: buf.count, flags: .dontWait) }
+        let buf = try socket.recv(length: min(available, wanted), flags: .dontWait)
+        guard buf.count > 0 else { return }
 
-            if bytesRead <= 0 {
-                didDisconnect()
-                return
-            }
+        if readBuffer != nil {
+            readBuffer!.append(buf)
+        } else {
+            readBuffer = buf
+        }
 
-            if bytesRead < buf.count {
-                buf = buf.subdata(in: 0..<bytesRead)
-            }
+        if readBuffer!.count >= needed {
+            let result = readBuffer!
+            DispatchQueue.main.async { item.completion(result) }
 
-            if readBuffer != nil {
-                readBuffer!.append(buf)
-            } else {
-                readBuffer = buf
-            }
-
-            if readBuffer!.count >= needed {
-                let result = readBuffer!
-                readBuffer = nil
-                _ = readQueue.removeFirst()
-                DispatchQueue.main.async { item.completion(result) }
-            }
-
-            wantReadEvents = readQueue.count > 0
-
-        } catch let e {
-            if let pe = e as? POSIXError, [EWOULDBLOCK,EAGAIN].contains(pe.code) {
-                wantReadEvents = true
-            } else {
-                didDisconnect()
-            }
+            readBuffer = nil
+            _ = readQueue.removeFirst()
         }
     }
 
@@ -143,50 +107,42 @@ public class StreamSocket : Hashable, CustomDebugStringConvertible {
 
     private var writeQueue: [Data] = []
 
-    private func tryWrite() {
+    private func doWrite() throws {
 
-        guard isOpen, let item = writeQueue.first else { return }
+        guard let item = writeQueue.first else { return }
+        let bytesWritten = try socket.send(buffer: item, flags: .dontWait)
 
-        do {
-            let bytesWritten = try item.withUnsafeBytes { return try socket.send(buffer: $0, length: item.count, flags: .dontWait) }
-
-            if bytesWritten == item.count {
-                _ = writeQueue.removeFirst()
-            } else if bytesWritten > 0 {
-                writeQueue[0] = item.subdata(in: bytesWritten..<item.count)
-            }
-            wantWriteEvents = writeQueue.count > 0
-        } catch let e {
-            if let pe = e as? POSIXError, [EWOULDBLOCK,EAGAIN].contains(pe.code) {
-                wantWriteEvents = true
-            } else {
-                didDisconnect()
-            }
+        if bytesWritten == item.count {
+            _ = writeQueue.removeFirst()
+        } else if bytesWritten > 0 {
+            writeQueue[0] = item.subdata(in: bytesWritten..<item.count)
         }
     }
+
+
 
     public func read(_ count: Int, completion: @escaping (Data)->()) {
         guard isOpen else { return }
         readQueue.append((min: count, max: count, completion: completion))
-        tryRead()
+        dsock.notifyReadable = true
     }
 
     public func read(max: Int, completion: @escaping (Data)->()) {
         guard isOpen else { return }
         readQueue.append((min: 1, max: max, completion: completion))
-        tryRead()
+        dsock.notifyReadable = true
     }
 
     public func read(min: Int, max: Int, completion: @escaping (Data)->()) {
         guard isOpen else { return }
         readQueue.append((min: min, max: max, completion: completion))
-        tryRead()
+        dsock.notifyReadable = true
     }
 
     public func write(_ data: Data) {
         guard isOpen else { return }
         writeQueue.append(data)
-        tryWrite()
+        dsock.notifyWritable = true
     }
 }
 
@@ -214,18 +170,16 @@ extension StreamSocket {
 }
 
 
-public class ListenSocket : CustomDebugStringConvertible {
+public class ListenSocket : DispatchSocketDelegate {
 
-    private var socket: Socket6?
-    private var source: DispatchSourceRead?
-    
+    private var dsock: DispatchSocket?
+    public var socket: Socket6? { return dsock?.socket }
+
     public var debugDescription: String {
-        return "ListenSocket \(socket?.debugDescription ?? "idle")"
+        return "ListenSocket(\(dsock?.debugDescription ?? "idle"))"
     }
 
-    public init() {
-        //default init() is internal, not public
-    }
+    public init() {}
 
     public func listen(port: UInt16, reuseAddress: Bool = false, accept: @escaping (Socket6)->()) throws {
         try listen(address: sockaddr_in6.any(port: port), reuseAddress: reuseAddress, accept: accept)
@@ -234,31 +188,31 @@ public class ListenSocket : CustomDebugStringConvertible {
     public func listen(address: sockaddr_in6, reuseAddress: Bool = false, accept: @escaping (Socket6)->()) throws {
         cancel()
 
-        socket = Socket6(type: .stream)
+        var s = Socket6(type: .stream)
         if reuseAddress {
-            socket!.reuseAddress = true
+            s.reuseAddress = true
         }
-        try socket!.bind(to: address)
-
-        source = DispatchSource.makeReadSource(fileDescriptor: socket!.fd, queue: DispatchQueue.main)
-        source!.setEventHandler { [weak self] in
-            if let sock = self?.socket, let newsock = try? sock.accept() {
-                accept(newsock)
-            }
-        }
-        source?.setCancelHandler { [weak self] in
-            self?.source = nil
-            self?.cancel()
-        }
-        source?.resume()
-        try socket?.listen(backlog: 10)
+        try s.bind(to: address)
+        dsock = DispatchSocket(socket: s, delegate: self)
+        handler = accept
+        try dsock!.socket.listen(backlog: 10)
+        dsock!.notifyReadable = true
     }
 
+    private var handler: ((Socket6)->())?
+    public func dispatchSocketIsReadable(_socket: DispatchSocket, count: Int) {
+        if let sock = dsock?.socket, let handler = handler, let newsock = try? sock.accept() {
+            handler(newsock)
+        }
+    }
+
+    public func dispatchSocketIsWritable(_socket: DispatchSocket) { /* don't care */ }
+    public func dispatchSocketDisconnected(_socket: DispatchSocket) { /* don't care */ }
+
     public func cancel() {
-        source?.cancel()
-        try? socket?.close()
-        source = nil
-        socket = nil
+        dsock?.close()
+        dsock = nil
+        handler = nil
     }
 
     deinit {
