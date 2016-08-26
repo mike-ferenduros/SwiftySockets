@@ -12,7 +12,10 @@ import Dispatch
 
 //When strict typing meets a crufty API...
 
-extension in6_addr : Equatable, CustomStringConvertible {
+extension in6_addr : Hashable, CustomStringConvertible {
+
+    public var hashValue: Int { return bytes.reduce(5381) { ($0 << 5) &+ $0 &+ Int($1) } }
+    
     public var description: String {
         var str = [CChar](repeating: 0, count: Int(INET6_ADDRSTRLEN))
         var mself = self
@@ -91,11 +94,13 @@ extension in6_addr : Equatable, CustomStringConvertible {
 
 
 ///Extension to reduce the pain of working with sockaddr_in6
-extension sockaddr_in6 : Equatable, CustomDebugStringConvertible {
+extension sockaddr_in6 : Hashable, CustomDebugStringConvertible {
 
     public var debugDescription: String {
         return "\(sin6_addr) / \(self.port)"
     }
+
+    public var hashValue: Int { return sin6_addr.hashValue ^ Int(sin6_port) ^ Int(sin6_flowinfo) ^ Int(sin6_scope_id) }
 
     public static func ==(lhs: sockaddr_in6, rhs: sockaddr_in6) -> Bool {
         return lhs.sin6_addr == rhs.sin6_addr && lhs.sin6_port == rhs.sin6_port && lhs.scope_id == rhs.scope_id && lhs.flowinfo == rhs.flowinfo

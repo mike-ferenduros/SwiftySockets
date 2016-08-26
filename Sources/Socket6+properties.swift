@@ -53,8 +53,15 @@ extension Socket6 {
         get { return (try? getboolopt(SOL_SOCKET, SO_BROADCAST)) ?? false }
         set { try? setboolopt(SOL_SOCKET, SO_BROADCAST, newValue) }
     }
+    public var dontRoute: Bool {
+        get { return (try? getboolopt(SOL_SOCKET, SO_DONTROUTE)) ?? false }
+        set { try? setboolopt(SOL_SOCKET, SO_DONTROUTE, newValue) }
+    }
     public var noDelay: Bool {
         get { return (try? getboolopt(Int32(IPPROTO_TCP), TCP_NODELAY)) ?? false }
         set { try? setboolopt(Int32(IPPROTO_TCP), TCP_NODELAY, newValue) }
+    }
+    public var isListening: Bool {
+        get { return (try? getboolopt(SOL_SOCKET, SO_ACCEPTCONN)) ?? false }
     }
 }

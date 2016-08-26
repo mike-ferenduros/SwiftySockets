@@ -18,9 +18,12 @@ public protocol StreamSocketDelegate {
 /**
     Buffered, async TCP
 */
-public class StreamSocket : CustomDebugStringConvertible {
+public class StreamSocket : Hashable, CustomDebugStringConvertible {
 
     public let socket: Socket6
+
+    public var hashValue: Int { return self.socket.hashValue }
+    public static func ==(lhs: StreamSocket, rhs: StreamSocket) -> Bool { return lhs === rhs }
 
     private let rsource: DispatchSourceRead
     private let wsource: DispatchSourceWrite

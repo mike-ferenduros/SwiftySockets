@@ -20,7 +20,10 @@ public protocol DatagramSocketDelegate: class {
 /**
     Buffered, async UDP.
 */
-public class DatagramSocket : CustomDebugStringConvertible {
+public class DatagramSocket : Hashable, CustomDebugStringConvertible {
+
+    public var hashValue: Int { return self.socket.hashValue }
+    public static func ==(lhs: DatagramSocket, rhs: DatagramSocket) -> Bool { return lhs === rhs }
 
     public var maxReadSize = 1500
 
