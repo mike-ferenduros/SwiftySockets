@@ -7,19 +7,23 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		770A96B51D53EE2A00F35198 /* DatagramSocket.swift in Sources */ = {isa = PBXBuildFile; fileRef = 770A96761D53E0EB00F35198 /* DatagramSocket.swift */; };
+		7701F1F51D71135500CF8116 /* DispatchSocket.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7701F1F41D71135500CF8116 /* DispatchSocket.swift */; };
+		7701F1F61D71135500CF8116 /* DispatchSocket.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7701F1F41D71135500CF8116 /* DispatchSocket.swift */; };
+		7701F1F71D71135500CF8116 /* DispatchSocket.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7701F1F41D71135500CF8116 /* DispatchSocket.swift */; };
+		7701F1F81D71135500CF8116 /* DispatchSocket.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7701F1F41D71135500CF8116 /* DispatchSocket.swift */; };
+		7701F1FA1D71136100CF8116 /* ListenSocket.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7701F1F91D71136100CF8116 /* ListenSocket.swift */; };
+		7701F1FB1D71136100CF8116 /* ListenSocket.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7701F1F91D71136100CF8116 /* ListenSocket.swift */; };
+		7701F1FC1D71136100CF8116 /* ListenSocket.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7701F1F91D71136100CF8116 /* ListenSocket.swift */; };
+		7701F1FD1D71136100CF8116 /* ListenSocket.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7701F1F91D71136100CF8116 /* ListenSocket.swift */; };
 		770A96B61D53EE2A00F35198 /* sockaddr_in6.swift in Sources */ = {isa = PBXBuildFile; fileRef = 770A96771D53E0EB00F35198 /* sockaddr_in6.swift */; };
 		770A96B71D53EE2A00F35198 /* Socket6.swift in Sources */ = {isa = PBXBuildFile; fileRef = 770A96781D53E0EB00F35198 /* Socket6.swift */; };
 		770A96B81D53EE2A00F35198 /* StreamSocket.swift in Sources */ = {isa = PBXBuildFile; fileRef = 770A96791D53E0EB00F35198 /* StreamSocket.swift */; };
-		770A96E01D53EEAF00F35198 /* DatagramSocket.swift in Sources */ = {isa = PBXBuildFile; fileRef = 770A96761D53E0EB00F35198 /* DatagramSocket.swift */; };
 		770A96E11D53EEAF00F35198 /* sockaddr_in6.swift in Sources */ = {isa = PBXBuildFile; fileRef = 770A96771D53E0EB00F35198 /* sockaddr_in6.swift */; };
 		770A96E21D53EEAF00F35198 /* Socket6.swift in Sources */ = {isa = PBXBuildFile; fileRef = 770A96781D53E0EB00F35198 /* Socket6.swift */; };
 		770A96E31D53EEAF00F35198 /* StreamSocket.swift in Sources */ = {isa = PBXBuildFile; fileRef = 770A96791D53E0EB00F35198 /* StreamSocket.swift */; };
-		770A96E41D53EEB000F35198 /* DatagramSocket.swift in Sources */ = {isa = PBXBuildFile; fileRef = 770A96761D53E0EB00F35198 /* DatagramSocket.swift */; };
 		770A96E51D53EEB000F35198 /* sockaddr_in6.swift in Sources */ = {isa = PBXBuildFile; fileRef = 770A96771D53E0EB00F35198 /* sockaddr_in6.swift */; };
 		770A96E61D53EEB000F35198 /* Socket6.swift in Sources */ = {isa = PBXBuildFile; fileRef = 770A96781D53E0EB00F35198 /* Socket6.swift */; };
 		770A96E71D53EEB000F35198 /* StreamSocket.swift in Sources */ = {isa = PBXBuildFile; fileRef = 770A96791D53E0EB00F35198 /* StreamSocket.swift */; };
-		770A96E81D53EEB000F35198 /* DatagramSocket.swift in Sources */ = {isa = PBXBuildFile; fileRef = 770A96761D53E0EB00F35198 /* DatagramSocket.swift */; };
 		770A96E91D53EEB000F35198 /* sockaddr_in6.swift in Sources */ = {isa = PBXBuildFile; fileRef = 770A96771D53E0EB00F35198 /* sockaddr_in6.swift */; };
 		770A96EA1D53EEB000F35198 /* Socket6.swift in Sources */ = {isa = PBXBuildFile; fileRef = 770A96781D53E0EB00F35198 /* Socket6.swift */; };
 		770A96EB1D53EEB000F35198 /* StreamSocket.swift in Sources */ = {isa = PBXBuildFile; fileRef = 770A96791D53E0EB00F35198 /* StreamSocket.swift */; };
@@ -34,7 +38,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		770A96761D53E0EB00F35198 /* DatagramSocket.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = DatagramSocket.swift; path = ../Sources/DatagramSocket.swift; sourceTree = "<group>"; };
+		7701F1F41D71135500CF8116 /* DispatchSocket.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DispatchSocket.swift; sourceTree = "<group>"; };
+		7701F1F91D71136100CF8116 /* ListenSocket.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ListenSocket.swift; sourceTree = "<group>"; };
 		770A96771D53E0EB00F35198 /* sockaddr_in6.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = sockaddr_in6.swift; path = ../Sources/sockaddr_in6.swift; sourceTree = "<group>"; };
 		770A96781D53E0EB00F35198 /* Socket6.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Socket6.swift; path = ../Sources/Socket6.swift; sourceTree = "<group>"; };
 		770A96791D53E0EB00F35198 /* StreamSocket.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = StreamSocket.swift; path = ../Sources/StreamSocket.swift; sourceTree = "<group>"; };
@@ -111,7 +116,8 @@
 				770A96771D53E0EB00F35198 /* sockaddr_in6.swift */,
 				770A96781D53E0EB00F35198 /* Socket6.swift */,
 				777563DB1D6F792C001581B7 /* Socket6+properties.swift */,
-				770A96761D53E0EB00F35198 /* DatagramSocket.swift */,
+				7701F1F41D71135500CF8116 /* DispatchSocket.swift */,
+				7701F1F91D71136100CF8116 /* ListenSocket.swift */,
 				770A96791D53E0EB00F35198 /* StreamSocket.swift */,
 			);
 			path = Sources;
@@ -319,10 +325,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				770A96B61D53EE2A00F35198 /* sockaddr_in6.swift in Sources */,
-				770A96B51D53EE2A00F35198 /* DatagramSocket.swift in Sources */,
 				77ACDFF71D588A53000349B1 /* POSIXError.swift in Sources */,
 				770A96B81D53EE2A00F35198 /* StreamSocket.swift in Sources */,
 				770A96B71D53EE2A00F35198 /* Socket6.swift in Sources */,
+				7701F1F51D71135500CF8116 /* DispatchSocket.swift in Sources */,
+				7701F1FA1D71136100CF8116 /* ListenSocket.swift in Sources */,
 				777563DC1D6F792C001581B7 /* Socket6+properties.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -332,10 +339,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				770A96E11D53EEAF00F35198 /* sockaddr_in6.swift in Sources */,
-				770A96E01D53EEAF00F35198 /* DatagramSocket.swift in Sources */,
 				77ACDFF81D588A53000349B1 /* POSIXError.swift in Sources */,
 				770A96E31D53EEAF00F35198 /* StreamSocket.swift in Sources */,
 				770A96E21D53EEAF00F35198 /* Socket6.swift in Sources */,
+				7701F1F61D71135500CF8116 /* DispatchSocket.swift in Sources */,
+				7701F1FB1D71136100CF8116 /* ListenSocket.swift in Sources */,
 				777563DD1D6F792C001581B7 /* Socket6+properties.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -345,10 +353,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				770A96E51D53EEB000F35198 /* sockaddr_in6.swift in Sources */,
-				770A96E41D53EEB000F35198 /* DatagramSocket.swift in Sources */,
 				77ACDFF91D588A53000349B1 /* POSIXError.swift in Sources */,
 				770A96E71D53EEB000F35198 /* StreamSocket.swift in Sources */,
 				770A96E61D53EEB000F35198 /* Socket6.swift in Sources */,
+				7701F1F81D71135500CF8116 /* DispatchSocket.swift in Sources */,
+				7701F1FD1D71136100CF8116 /* ListenSocket.swift in Sources */,
 				777563DF1D6F792C001581B7 /* Socket6+properties.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -358,10 +367,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				770A96E91D53EEB000F35198 /* sockaddr_in6.swift in Sources */,
-				770A96E81D53EEB000F35198 /* DatagramSocket.swift in Sources */,
 				77ACDFFA1D588A53000349B1 /* POSIXError.swift in Sources */,
 				770A96EB1D53EEB000F35198 /* StreamSocket.swift in Sources */,
 				770A96EA1D53EEB000F35198 /* Socket6.swift in Sources */,
+				7701F1F71D71135500CF8116 /* DispatchSocket.swift in Sources */,
+				7701F1FC1D71136100CF8116 /* ListenSocket.swift in Sources */,
 				777563DE1D6F792C001581B7 /* Socket6+properties.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
