@@ -91,8 +91,8 @@ public struct Socket6 : Hashable, CustomDebugStringConvertible {
         return value
     }
 
-    public func bind(to address: sockaddr_in6) throws {
-        try? setsockopt(Int32(IPPROTO_IPV6), Int32(IPV6_V6ONLY), Int32(0))
+    public func bind(to address: sockaddr_in6, ip6Only: Bool? = false) throws {
+        if let ip6Only = ip6Only { setIP6Only(ip6Only) }
         let result = address.withSockaddr { sock_bind(fd, $0, $1) }
         try check(result)
     }

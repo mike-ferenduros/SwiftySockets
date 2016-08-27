@@ -11,11 +11,11 @@ import Foundation
 
 extension Socket6 {
 
-    ///The socket's locally bound address, or zeroes if not applicable
-    public var sockname: sockaddr_in6 {
+    ///The socket's locally bound address, or nil if not bound/connected or an error occurs
+    public var sockname: sockaddr_in6? {
         var address = sockaddr_in6()
-        _ = address.withMutableSockaddr { getsockname(fd, $0, $1) }
-        return address
+        let result = address.withMutableSockaddr { getsockname(fd, $0, $1) }
+        return result == 0 ? address : nil
     }
 
     ///The socket's connected address, or nil if the socket is not connected or an error occurs
@@ -41,27 +41,78 @@ extension Socket6 {
         try setsockopt(level, option, value ? Int32(1) : Int32(0))
     }
 
+    public func setReuseAddress(_ newValue: Bool) {
+        try? setboolopt(SOL_SOCKET, SO_REUSEADDR, newValue)
+    }
     public var reuseAddress: Bool {
         get { return (try? getboolopt(SOL_SOCKET, SO_REUSEADDR)) ?? false }
-        set { try? setboolopt(SOL_SOCKET, SO_REUSEADDR, newValue) }
+        set { setReuseAddress(newValue) }
+    }
+
+    public func setKeepAlive(_ newValue: Bool) {
+        try? setboolopt(SOL_SOCKET, SO_KEEPALIVE, newValue)
     }
     public var keepAlive: Bool {
         get { return (try? getboolopt(SOL_SOCKET, SO_KEEPALIVE)) ?? false }
-        set { try? setboolopt(SOL_SOCKET, SO_KEEPALIVE, newValue) }
+        set { setKeepAlive(newValue) }
+    }
+
+    public func setBroadcast(_ newValue: Bool) {
+        try? setboolopt(SOL_SOCKET, SO_BROADCAST, newValue)
     }
     public var broadcast: Bool {
         get { return (try? getboolopt(SOL_SOCKET, SO_BROADCAST)) ?? false }
-        set { try? setboolopt(SOL_SOCKET, SO_BROADCAST, newValue) }
+        set { setBroadcast(newValue) }
+    }
+
+    public func setDontRoute(_ newValue: Bool) {
+        try? setboolopt(SOL_SOCKET, SO_DONTROUTE, newValue)
     }
     public var dontRoute: Bool {
         get { return (try? getboolopt(SOL_SOCKET, SO_DONTROUTE)) ?? false }
-        set { try? setboolopt(SOL_SOCKET, SO_DONTROUTE, newValue) }
+        set { setDontRoute(newValue) }
+    }
+
+    public func setNoDelay(_ newValue: Bool) {
+        try? setboolopt(Int32(IPPROTO_TCP), TCP_NODELAY, newValue)
     }
     public var noDelay: Bool {
         get { return (try? getboolopt(Int32(IPPROTO_TCP), TCP_NODELAY)) ?? false }
-        set { try? setboolopt(Int32(IPPROTO_TCP), TCP_NODELAY, newValue) }
+        set { setNoDelay(newValue) }
     }
+
+    public func setIP6Only(_ newValue: Bool) {
+        try? setboolopt(Int32(IPPROTO_IPV6), Int32(IPV6_V6ONLY), newValue)
+    }
+    public var ip6Only: Bool {
+        get { return (try? getboolopt(Int32(IPPROTO_IPV6), Int32(IPV6_V6ONLY))) ?? false }
+        set { setIP6Only(newValue) }
+    }
+
     public var isListening: Bool {
         get { return (try? getboolopt(SOL_SOCKET, SO_ACCEPTCONN)) ?? false }
     }
+
+    #if !os(Linux)
+    public enum NetServiceType: Int {
+        case bestEffort=0, background, signaling, interactiveVideo, interactiveVoice, responsiveAV, streamingAV, management, responsiveData
+        private static let rawServiceTypes = [NET_SERVICE_TYPE_BE, NET_SERVICE_TYPE_BK, NET_SERVICE_TYPE_SIG, NET_SERVICE_TYPE_VI, NET_SERVICE_TYPE_VO, NET_SERVICE_TYPE_RV, NET_SERVICE_TYPE_AV, NET_SERVICE_TYPE_OAM, NET_SERVICE_TYPE_RD]
+        init?(rawServiceType: Int32) {
+            guard let idx = NetServiceType.rawServiceTypes.index(of: rawServiceType) else { return nil }
+            self.init(rawValue: idx)
+        }
+        var rawType: Int32 { return NetServiceType.rawServiceTypes[self.rawValue] }
+    }
+
+    public func setNetServiceType(_ newValue: NetServiceType) {
+        try? setsockopt(SOL_SOCKET, SO_NET_SERVICE_TYPE, newValue.rawType)
+    }
+    public var netServiceType: NetServiceType {
+        get {
+            guard let rawType = try? getsockopt(SOL_SOCKET, SO_NET_SERVICE_TYPE, Int32.self) else { return .bestEffort }
+            return NetServiceType(rawServiceType: rawType) ?? .bestEffort
+        }
+        set { setNetServiceType(newValue) }
+    }
+    #endif
 }
