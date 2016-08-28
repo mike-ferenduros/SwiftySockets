@@ -25,8 +25,18 @@ extension Socket6 {
         return result == 0 ? address : nil
     }
 
+    public var type: SocketType {
+        get {
+            if let t = try? getsockopt(SOL_SOCKET, SO_TYPE, Int32.self), let result = SocketType(rawValue: t) {
+                return result
+            } else {
+                //This is a terrible punt
+                return .raw
+            }
+        }
+    }
 
-    ///Returns and clears the current error (hence a function not a property)
+    ///SO_ERROR: Returns and clears the current error (hence a function not a property)
     public func getError() -> POSIXError? {
         guard let e = try? getsockopt(SOL_SOCKET, SO_ERROR, Int32.self) else { return nil }
         return e < 0 ? POSIXError(e) : nil
@@ -41,76 +51,113 @@ extension Socket6 {
         try setsockopt(level, option, value ? Int32(1) : Int32(0))
     }
 
+    ///SO_REUSEADDR: allow local address reuse
     public func setReuseAddress(_ newValue: Bool) {
         try? setboolopt(SOL_SOCKET, SO_REUSEADDR, newValue)
     }
+    ///SO_REUSEADDR: allow local address reuse
     public var reuseAddress: Bool {
         get { return (try? getboolopt(SOL_SOCKET, SO_REUSEADDR)) ?? false }
         set { setReuseAddress(newValue) }
     }
 
+    ///SO_KEEPALIVE: keep connections alive
     public func setKeepAlive(_ newValue: Bool) {
         try? setboolopt(SOL_SOCKET, SO_KEEPALIVE, newValue)
     }
+    ///SO_KEEPALIVE: keep connections alive
     public var keepAlive: Bool {
         get { return (try? getboolopt(SOL_SOCKET, SO_KEEPALIVE)) ?? false }
         set { setKeepAlive(newValue) }
     }
 
+    ///SO_BROADCAST: permit sending of broadcast msgs
     public func setBroadcast(_ newValue: Bool) {
         try? setboolopt(SOL_SOCKET, SO_BROADCAST, newValue)
     }
+    ///SO_BROADCAST: permit sending of broadcast msgs
     public var broadcast: Bool {
         get { return (try? getboolopt(SOL_SOCKET, SO_BROADCAST)) ?? false }
         set { setBroadcast(newValue) }
     }
 
+    ///SO_DONTROUTE: just use interface addresses
     public func setDontRoute(_ newValue: Bool) {
         try? setboolopt(SOL_SOCKET, SO_DONTROUTE, newValue)
     }
+    ///SO_DONTROUTE: just use interface addresses
     public var dontRoute: Bool {
         get { return (try? getboolopt(SOL_SOCKET, SO_DONTROUTE)) ?? false }
         set { setDontRoute(newValue) }
     }
 
+    ///TCP_NODELAY: don't delay send to coalesce packets
     public func setNoDelay(_ newValue: Bool) {
         try? setboolopt(Int32(IPPROTO_TCP), TCP_NODELAY, newValue)
     }
+    ///TCP_NODELAY: don't delay send to coalesce packets
     public var noDelay: Bool {
         get { return (try? getboolopt(Int32(IPPROTO_TCP), TCP_NODELAY)) ?? false }
         set { setNoDelay(newValue) }
     }
 
+    ///IPV6_V6ONLY: only bind INET6 at wildcard bind. Socket6.bind() overrides this, unless you pass nil for reuseAddress.
     public func setIP6Only(_ newValue: Bool) {
         try? setboolopt(Int32(IPPROTO_IPV6), Int32(IPV6_V6ONLY), newValue)
     }
+    ///IPV6_V6ONLY: only bind INET6 at wildcard bind. Socket6.bind() overrides this, unless you pass nil for reuseAddress.
     public var ip6Only: Bool {
         get { return (try? getboolopt(Int32(IPPROTO_IPV6), Int32(IPV6_V6ONLY))) ?? false }
         set { setIP6Only(newValue) }
     }
 
+    ///SO_ACCEPTCONN: socket has had listen()
     public var isListening: Bool {
         get { return (try? getboolopt(SOL_SOCKET, SO_ACCEPTCONN)) ?? false }
     }
 
+
     #if !os(Linux)
-    public enum NetServiceType: Int {
-        case bestEffort=0, background, signaling, interactiveVideo, interactiveVoice, responsiveAV, streamingAV, management, responsiveData
-        private static let rawServiceTypes = [NET_SERVICE_TYPE_BE, NET_SERVICE_TYPE_BK, NET_SERVICE_TYPE_SIG, NET_SERVICE_TYPE_VI, NET_SERVICE_TYPE_VO, NET_SERVICE_TYPE_RV, NET_SERVICE_TYPE_AV, NET_SERVICE_TYPE_OAM, NET_SERVICE_TYPE_RD]
-        init?(rawServiceType: Int32) {
-            guard let idx = NetServiceType.rawServiceTypes.index(of: rawServiceType) else { return nil }
-            self.init(rawValue: idx)
+    public enum NetServiceType: RawRepresentable {
+        case bestEffort, background, signaling, interactiveVideo, interactiveVoice, responsiveAV, streamingAV, management, responsiveData
+        public init?(rawValue: Int32) {
+            switch rawValue {
+                case NET_SERVICE_TYPE_BE:   self = .bestEffort
+                case NET_SERVICE_TYPE_BK:   self = .background
+                case NET_SERVICE_TYPE_SIG:  self = .signaling
+                case NET_SERVICE_TYPE_VI:   self = .interactiveVideo
+                case NET_SERVICE_TYPE_VO:   self = .interactiveVoice
+                case NET_SERVICE_TYPE_RV:   self = .responsiveAV
+                case NET_SERVICE_TYPE_AV:   self = .streamingAV
+                case NET_SERVICE_TYPE_OAM:  self = .management
+                case NET_SERVICE_TYPE_RD:   self = .responsiveData
+                default: return nil
+            }
         }
-        var rawType: Int32 { return NetServiceType.rawServiceTypes[self.rawValue] }
+        public var rawValue: Int32 {
+            switch self {
+                case .bestEffort:       return NET_SERVICE_TYPE_BE
+                case .background:       return NET_SERVICE_TYPE_BK
+                case .signaling:        return NET_SERVICE_TYPE_SIG
+                case .interactiveVideo: return NET_SERVICE_TYPE_VI
+                case .interactiveVoice: return NET_SERVICE_TYPE_VO
+                case .responsiveAV:     return NET_SERVICE_TYPE_RV
+                case .streamingAV:      return NET_SERVICE_TYPE_AV
+                case .management:       return NET_SERVICE_TYPE_OAM
+                case .responsiveData:   return NET_SERVICE_TYPE_RD
+            }
+        }
     }
 
+    ///SO_NET_SERVICE_TYPE: Network service type
     public func setNetServiceType(_ newValue: NetServiceType) {
-        try? setsockopt(SOL_SOCKET, SO_NET_SERVICE_TYPE, newValue.rawType)
+        try? setsockopt(SOL_SOCKET, SO_NET_SERVICE_TYPE, newValue.rawValue)
     }
+    ///SO_NET_SERVICE_TYPE: Network service type
     public var netServiceType: NetServiceType {
         get {
             guard let rawType = try? getsockopt(SOL_SOCKET, SO_NET_SERVICE_TYPE, Int32.self) else { return .bestEffort }
-            return NetServiceType(rawServiceType: rawType) ?? .bestEffort
+            return NetServiceType(rawValue: rawType) ?? .bestEffort
         }
         set { setNetServiceType(newValue) }
     }

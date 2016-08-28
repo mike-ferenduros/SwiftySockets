@@ -23,6 +23,12 @@ private let sock_sendto = sendto
 private let sock_recv = recv
 private let sock_recvfrom = recvfrom
 
+#if os(Linux)
+private func socktype(_ t: __socket_type) -> Int32 { return Int32(t.rawValue) }
+#else
+private func socktype(_ t: Int32) -> Int32 { return t }
+#endif
+
 
 /**
     Wrapper for socket descriptor, providing a slightly friendlier interface to the socket API
@@ -54,15 +60,31 @@ public struct Socket6 : Hashable, CustomDebugStringConvertible {
         self.fd = fd
     }
 
-    ///Initialise with the desired type
-    public enum SocketType { case raw, stream, datagram }
-    public init(type: SocketType = .stream) {
-        let stype = [.raw: SOCK_RAW, .stream: SOCK_STREAM, .datagram: SOCK_DGRAM][type]!
-        #if os(Linux)
-        self.init(fd: socket(AF_INET6, Int32(stype.rawValue), 0))
-        #else
-        self.init(fd: socket(AF_INET6, stype, 0))
-        #endif
+    public enum SocketType : RawRepresentable {
+
+        case raw, stream, datagram, reliableDatagram, seqPacket
+        public init?(rawValue: Int32) {
+            switch rawValue {
+                case socktype(SOCK_RAW):       self = .raw
+                case socktype(SOCK_STREAM):    self = .stream
+                case socktype(SOCK_DGRAM):     self = .datagram
+                case socktype(SOCK_RDM):       self = .reliableDatagram
+                case socktype(SOCK_SEQPACKET): self = .seqPacket
+                default: return nil
+            }
+        }
+        public var rawValue: Int32 {
+            switch self {
+                case .raw:              return socktype(SOCK_RAW)
+                case .stream:           return socktype(SOCK_STREAM)
+                case .datagram:         return socktype(SOCK_DGRAM)
+                case .reliableDatagram: return socktype(SOCK_RDM)
+                case .seqPacket:        return socktype(SOCK_SEQPACKET)
+            }
+        }
+    }
+    public init(type: SocketType = .stream, nonblocking: Bool = false) {
+        self.init(fd: socket(AF_INET6, type.rawValue, 0))
     }
 
     public func close() throws {
@@ -70,7 +92,24 @@ public struct Socket6 : Hashable, CustomDebugStringConvertible {
         try check(result)
     }
 
-    public enum ShutdownOptions: Int32 { case read = 0, write = 1, readwrite = 2 }
+    public enum ShutdownOptions : RawRepresentable {
+        case read, write, readwrite
+        public init?(rawValue: Int32) {
+            switch rawValue {
+                case Int32(SHUT_RD):    self = .read
+                case Int32(SHUT_WR):    self = .write
+                case Int32(SHUT_RDWR):  self = .readwrite
+                default: return nil
+            }
+        }
+        public var rawValue: Int32 {
+            switch self {
+                case .read:         return Int32(SHUT_RD)
+                case .write:        return Int32(SHUT_WR)
+                case .readwrite:    return Int32(SHUT_RDWR)
+            }
+        }
+    }
     public func shutdown(_ how: ShutdownOptions) throws {
         let result = sock_shutdown(fd, how.rawValue)
         try check(result)
@@ -83,6 +122,7 @@ public struct Socket6 : Hashable, CustomDebugStringConvertible {
     }
 
     public func getsockopt<T>(_ level: Int32, _ option: Int32, _ type: T.Type) throws -> T {
+        //There must be a better way to make a T :(
         var len = socklen_t(MemoryLayout<T>.size)
         let buf = Data(count: MemoryLayout<T>.size)
         var value: T = buf.withUnsafeBytes { $0.pointee }
@@ -91,6 +131,7 @@ public struct Socket6 : Hashable, CustomDebugStringConvertible {
         return value
     }
 
+    ///Parameter ip6Only controls whether binding the socket to a wildcard address also accepts IPv4 connections.
     public func bind(to address: sockaddr_in6, ip6Only: Bool? = false) throws {
         if let ip6Only = ip6Only { setIP6Only(ip6Only) }
         let result = address.withSockaddr { sock_bind(fd, $0, $1) }
@@ -100,6 +141,21 @@ public struct Socket6 : Hashable, CustomDebugStringConvertible {
     public func connect(to address: sockaddr_in6) throws {
         let result = address.withSockaddr { sock_connect(fd, $0, $1) }
         try check(result)
+    }
+
+    ///Look up and connect to hostname:port, returning the address used
+    public func connect(to hostname: String, port: UInt16) throws -> sockaddr_in6 {
+        let addresses = try sockaddr_in6.getaddrinfo(hostname: hostname, port: port)
+        var errors: [Error] = []
+        for address in addresses {
+            do {
+                try connect(to: address)
+                return address
+            } catch let e {
+                errors.append(e)
+            }
+        }
+        throw errors.first ?? POSIXError(EAI_SYSTEM)        //Shouldn't happen.
     }
 
     public func listen(backlog: Int = 16) throws {
