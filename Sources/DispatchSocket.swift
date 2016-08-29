@@ -86,9 +86,21 @@ public class DispatchSocket : Hashable, CustomDebugStringConvertible {
 
     public func close() {
         guard isOpen else { return }
+
+        //Sigh. Ensure sources are kept alive until cancellation handler has been called.
+        let rsourceRetain = Unmanaged.passRetained(rsource)
+        let wsourceRetain = Unmanaged.passRetained(wsource)
+        rsource.setCancelHandler { rsourceRetain.release() }
+        wsource.setCancelHandler { wsourceRetain.release() }
+        rsource.setEventHandler(handler: nil)
+        wsource.setEventHandler(handler: nil)
+        self.notifyReadable = true
+        self.notifyWritable = true
         rsource.cancel()
         wsource.cancel()
+
         try? socket.close()
+
         isOpen = false
     }
 
