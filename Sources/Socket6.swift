@@ -34,15 +34,22 @@ private func socktype(_ t: Int32) -> Int32 { return t }
     Wrapper for socket descriptor, providing a slightly friendlier interface to the socket API
     Lifetime management is NOT handled
 */
-public struct Socket6 : Hashable, CustomDebugStringConvertible {
+public struct Socket6 : Hashable, RawRepresentable, CustomDebugStringConvertible {
 
     public var debugDescription: String {
-        return "fd \(fd): \(sockname) -> \(peername?.debugDescription ?? "unconnected")"
+        return "fd \(fd): \(sockname?.debugDescription ?? "unbound") -> \(peername?.debugDescription ?? "unconnected")"
     }
 
-    public var hashValue: Int { return Int(fd) }
-    public static func ==(lhs: Socket6, rhs: Socket6) -> Bool { return lhs.fd == rhs.fd }
+    public var hashValue: Int { return rawValue.hashValue }
+    public static func ==(lhs: Socket6, rhs: Socket6) -> Bool { return lhs.rawValue == rhs.rawValue }
 
+    public let fd: Int32
+    public init(fd: Int32) { self.fd = fd }
+
+    public var rawValue: Int32 { return fd }
+    public init(rawValue: Int32) { self.init(fd: rawValue) }
+
+    
     private func check(_ result: Int) throws { try check(Int32(result)) }
     private func check(_ result: Int32) throws {
         guard result >= 0 else {
@@ -50,15 +57,6 @@ public struct Socket6 : Hashable, CustomDebugStringConvertible {
         }
     }
 
-
-    ///The socket descriptor
-    public let fd: Int32
-
-
-    ///Initialise with an existing descriptor
-    public init(fd: Int32) {
-        self.fd = fd
-    }
 
     public enum SocketType : RawRepresentable {
 
@@ -83,7 +81,7 @@ public struct Socket6 : Hashable, CustomDebugStringConvertible {
             }
         }
     }
-    public init(type: SocketType = .stream, nonblocking: Bool = false) {
+    public init(type: SocketType = .stream) {
         self.init(fd: socket(AF_INET6, type.rawValue, 0))
     }
 
