@@ -162,6 +162,11 @@ extension sockaddr_in6 : Hashable, CustomDebugStringConvertible {
         self.scope_id = scope_id
     }
 
+    public init?(addr: String, port: UInt16, flowinfo: UInt32 = 0, scope_id: UInt32 = 0) {
+        guard let a = in6_addr(addr) else { return nil }
+        self.init(addr: a, port: port, flowinfo: flowinfo, scope_id: scope_id)
+    }
+
     /**
         Initialise from IPv4 sockaddr structure, converting to IPv4-mapped IPv6
     */
