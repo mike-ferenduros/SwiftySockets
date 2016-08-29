@@ -88,10 +88,10 @@ public class DispatchSocket : Hashable, CustomDebugStringConvertible {
         guard isOpen else { return }
 
         //Sigh. Ensure sources are kept alive until cancellation handler has been called.
-        let rsourceRetain = Unmanaged.passRetained(rsource)
-        let wsourceRetain = Unmanaged.passRetained(wsource)
-        rsource.setCancelHandler { rsourceRetain.release() }
-        wsource.setCancelHandler { wsourceRetain.release() }
+        var rs: DispatchSourceRead? = rsource
+        var ws: DispatchSourceWrite? = wsource
+        rsource.setCancelHandler { _ = rs?.handle; rs = nil }   //Access a property to shut the bloody compiler up,
+        wsource.setCancelHandler { _ = ws?.handle; ws = nil }   //and to ensure the var isn't optimised away.
         rsource.setEventHandler(handler: nil)
         wsource.setEventHandler(handler: nil)
         self.notifyReadable = true
