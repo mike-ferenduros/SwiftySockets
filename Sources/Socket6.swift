@@ -252,8 +252,7 @@ public struct Socket6 : Hashable, RawRepresentable, CustomDebugStringConvertible
 
     - Parameter address: The address to connect to
 
-    Throws:
-        `POSIXError`
+    - Throws: POSIXError
         - `EACCES`, `EPERM`: The user tried to connect to a broadcast address without having the socket broadcast flag enabled or the connection request failed because of a local firewall rule.
         - `EADDRINUSE`: Local address is already in use.
         - `EADDRNOTAVAIL`: The socket had not previously been bound to an address and, upon attempting to bind it to an ephemeral port, it was determined that all port numbers in the ephemeral port range are currently in use.
