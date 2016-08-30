@@ -164,14 +164,37 @@ public struct Socket6 : Hashable, RawRepresentable, CustomDebugStringConvertible
         let result = sock_shutdown(fd, how.rawValue)
         try check(result)
     }
+    
+    public enum SocketOptionLevel : RawRepresentable {
+        case socket, tcp, udp, ip, ipv6
+        public init?(rawValue: Int32) {
+            switch rawValue {
+                case SOL_SOCKET:            self = .socket
+                case Int32(IPPROTO_TCP):    self = .tcp
+                case Int32(IPPROTO_UDP):    self = .udp
+                case Int32(IPPROTO_IP):     self = .ip
+                case Int32(IPPROTO_IPV6):   self = .ipv6
+                default: return nil
+            }
+        }
+        public var rawValue: Int32 {
+            switch self {
+                case .socket:   return SOL_SOCKET
+                case .tcp:      return Int32(IPPROTO_TCP)
+                case .udp:      return Int32(IPPROTO_UDP)
+                case .ip:       return Int32(IPPROTO_IP)
+                case .ipv6:     return Int32(IPPROTO_IPV6)
+            }
+        }
+    }
 
     /**
     Set options for the socket.
 
     Options may exist at multiple protocol levels; they are always present at the uppermost socket level.
 
-    - Parameter level: The level at which the option resides. To set options at the sockets API level, specify `SOL_SOCKET`. To set options at any other level, supply the protocol number of the appropriate protocol controlling the option.
-    
+    - Parameter level: The level at which the option resides. To set options at the sockets API level, specify `.socket`.
+
     - Parameter option: Passed uninterpreted to the appropriate protocol module for interpretation.
 
     - Parameter value: Passed uninterpreted to the appropriate protocol module for interpretation.
@@ -183,9 +206,9 @@ public struct Socket6 : Hashable, RawRepresentable, CustomDebugStringConvertible
         - `ENOPROTOOPT`: The option is unknown at the level indicated.
         - `ENOTSOCK`: `fd` does not refer to a socket.    
     */
-    public func setsockopt<T>(_ level: Int32, _ option: Int32, _ value: T) throws {
+    public func setsockopt<T>(_ level: SocketOptionLevel, _ option: Int32, _ value: T) throws {
         var value = value
-        let result = sock_setsockopt(fd, level, option, &value, socklen_t(MemoryLayout<T>.size))
+        let result = sock_setsockopt(fd, level.rawValue, option, &value, socklen_t(MemoryLayout<T>.size))
         try check(result)
     }
 
@@ -194,7 +217,7 @@ public struct Socket6 : Hashable, RawRepresentable, CustomDebugStringConvertible
     
     Options may exist at multiple protocol levels; they are always present at the uppermost socket level.
 
-    - Parameter level: The level at which the option resides. To set options at the sockets API level, specify `SOL_SOCKET`. To set options at any other level, supply the protocol number of the appropriate protocol controlling the option.
+    - Parameter level: The level at which the option resides. To set options at the sockets API level, specify `.socket`.
     
     - Parameter option: Passed uninterpreted to the appropriate protocol module for interpretation.
 
@@ -208,12 +231,12 @@ public struct Socket6 : Hashable, RawRepresentable, CustomDebugStringConvertible
 
     - Returns: The retrieved option value
     */
-    public func getsockopt<T>(_ level: Int32, _ option: Int32, _ type: T.Type) throws -> T {
+    public func getsockopt<T>(_ level: SocketOptionLevel, _ option: Int32, _ type: T.Type) throws -> T {
         //There must be a better way to make a T :(
         var len = socklen_t(MemoryLayout<T>.size)
         let buf = Data(count: MemoryLayout<T>.size)
         var value: T = buf.withUnsafeBytes { $0.pointee }
-        let result = sock_getsockopt(fd, level, option, &value, &len)
+        let result = sock_getsockopt(fd, level.rawValue, option, &value, &len)
         try check(result)
         return value
     }

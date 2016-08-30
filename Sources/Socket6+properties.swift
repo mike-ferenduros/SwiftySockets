@@ -27,88 +27,88 @@ extension Socket6 {
 
     public var type: SocketType {
         //This is a terrible punt
-        guard let t = try? getsockopt(SOL_SOCKET, SO_TYPE, Int32.self), let result = SocketType(rawValue: t) else { return .raw }
+        guard let t = try? getsockopt(.socket, SO_TYPE, Int32.self), let result = SocketType(rawValue: t) else { return .raw }
         return result
     }
 
     ///SO_ERROR: Returns and clears the current error (hence a function not a property)
     public func getError() -> POSIXError? {
-        guard let e = try? getsockopt(SOL_SOCKET, SO_ERROR, Int32.self) else { return nil }
+        guard let e = try? getsockopt(.socket, SO_ERROR, Int32.self) else { return nil }
         return e < 0 ? POSIXError(e) : nil
     }
 
 
-    private func getboolopt(_ level: Int32, _ option: Int32) throws -> Bool {
+    private func getboolopt(_ level: SocketOptionLevel, _ option: Int32) throws -> Bool {
         let value = try getsockopt(level, option, Int32.self)
         return value != 0
     }
-    private func setboolopt(_ level: Int32, _ option: Int32, _ value: Bool) throws {
+    private func setboolopt(_ level: SocketOptionLevel, _ option: Int32, _ value: Bool) throws {
         try setsockopt(level, option, value ? Int32(1) : Int32(0))
     }
 
     ///SO_REUSEADDR: allow local address reuse
     public func setReuseAddress(_ newValue: Bool) {
-        try? setboolopt(SOL_SOCKET, SO_REUSEADDR, newValue)
+        try? setboolopt(.socket, SO_REUSEADDR, newValue)
     }
     ///SO_REUSEADDR: allow local address reuse
     public var reuseAddress: Bool {
-        get { return (try? getboolopt(SOL_SOCKET, SO_REUSEADDR)) ?? false }
+        get { return (try? getboolopt(.socket, SO_REUSEADDR)) ?? false }
         set { setReuseAddress(newValue) }
     }
 
     ///SO_KEEPALIVE: keep connections alive
     public func setKeepAlive(_ newValue: Bool) {
-        try? setboolopt(SOL_SOCKET, SO_KEEPALIVE, newValue)
+        try? setboolopt(.socket, SO_KEEPALIVE, newValue)
     }
     ///SO_KEEPALIVE: keep connections alive
     public var keepAlive: Bool {
-        get { return (try? getboolopt(SOL_SOCKET, SO_KEEPALIVE)) ?? false }
+        get { return (try? getboolopt(.socket, SO_KEEPALIVE)) ?? false }
         set { setKeepAlive(newValue) }
     }
 
     ///SO_BROADCAST: permit sending of broadcast msgs
     public func setBroadcast(_ newValue: Bool) {
-        try? setboolopt(SOL_SOCKET, SO_BROADCAST, newValue)
+        try? setboolopt(.socket, SO_BROADCAST, newValue)
     }
     ///SO_BROADCAST: permit sending of broadcast msgs
     public var broadcast: Bool {
-        get { return (try? getboolopt(SOL_SOCKET, SO_BROADCAST)) ?? false }
+        get { return (try? getboolopt(.socket, SO_BROADCAST)) ?? false }
         set { setBroadcast(newValue) }
     }
 
     ///SO_DONTROUTE: just use interface addresses
     public func setDontRoute(_ newValue: Bool) {
-        try? setboolopt(SOL_SOCKET, SO_DONTROUTE, newValue)
+        try? setboolopt(.socket, SO_DONTROUTE, newValue)
     }
     ///SO_DONTROUTE: just use interface addresses
     public var dontRoute: Bool {
-        get { return (try? getboolopt(SOL_SOCKET, SO_DONTROUTE)) ?? false }
+        get { return (try? getboolopt(.socket, SO_DONTROUTE)) ?? false }
         set { setDontRoute(newValue) }
     }
 
     ///TCP_NODELAY: don't delay send to coalesce packets
     public func setNoDelay(_ newValue: Bool) {
-        try? setboolopt(Int32(IPPROTO_TCP), TCP_NODELAY, newValue)
+        try? setboolopt(.tcp, TCP_NODELAY, newValue)
     }
     ///TCP_NODELAY: don't delay send to coalesce packets
     public var noDelay: Bool {
-        get { return (try? getboolopt(Int32(IPPROTO_TCP), TCP_NODELAY)) ?? false }
+        get { return (try? getboolopt(.tcp, TCP_NODELAY)) ?? false }
         set { setNoDelay(newValue) }
     }
 
     ///IPV6_V6ONLY: only bind INET6 at wildcard bind
     public func setIP6Only(_ newValue: Bool) {
-        try? setboolopt(Int32(IPPROTO_IPV6), Int32(IPV6_V6ONLY), newValue)
+        try? setboolopt(.ipv6, Int32(IPV6_V6ONLY), newValue)
     }
     ///IPV6_V6ONLY: only bind INET6 at wildcard bind
     public var ip6Only: Bool {
-        get { return (try? getboolopt(Int32(IPPROTO_IPV6), Int32(IPV6_V6ONLY))) ?? false }
+        get { return (try? getboolopt(.ipv6, Int32(IPV6_V6ONLY))) ?? false }
         set { setIP6Only(newValue) }
     }
 
     ///SO_ACCEPTCONN: socket has had listen()
     public var isListening: Bool {
-        return (try? getboolopt(SOL_SOCKET, SO_ACCEPTCONN)) ?? false
+        return (try? getboolopt(.socket, SO_ACCEPTCONN)) ?? false
     }
 
     ///SO_NREAD / FIONREAD: Bytes available to read in the next recv call (ie. datagram size if UDP). 
@@ -119,7 +119,7 @@ extension Socket6 {
         try! check(result)
         return Int(size)
         #else
-        let size = try! getsockopt(SOL_SOCKET, SO_NREAD, UInt32.self)
+        let size = try! getsockopt(.socket, SO_NREAD, UInt32.self)
         return Int(size)
         #endif
     }
@@ -158,12 +158,12 @@ extension Socket6 {
 
     ///SO_NET_SERVICE_TYPE: Network service type
     public func setNetServiceType(_ newValue: NetServiceType) {
-        try? setsockopt(SOL_SOCKET, SO_NET_SERVICE_TYPE, newValue.rawValue)
+        try? setsockopt(.socket, SO_NET_SERVICE_TYPE, newValue.rawValue)
     }
     ///SO_NET_SERVICE_TYPE: Network service type
     public var netServiceType: NetServiceType {
         get {
-            guard let rawType = try? getsockopt(SOL_SOCKET, SO_NET_SERVICE_TYPE, Int32.self) else { return .bestEffort }
+            guard let rawType = try? getsockopt(.socket, SO_NET_SERVICE_TYPE, Int32.self) else { return .bestEffort }
             return NetServiceType(rawValue: rawType) ?? .bestEffort
         }
         set { setNetServiceType(newValue) }
