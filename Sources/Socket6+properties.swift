@@ -26,14 +26,9 @@ extension Socket6 {
     }
 
     public var type: SocketType {
-        get {
-            if let t = try? getsockopt(SOL_SOCKET, SO_TYPE, Int32.self), let result = SocketType(rawValue: t) {
-                return result
-            } else {
-                //This is a terrible punt
-                return .raw
-            }
-        }
+        //This is a terrible punt
+        guard let t = try? getsockopt(SOL_SOCKET, SO_TYPE, Int32.self), let result = SocketType(rawValue: t) else { return .raw }
+        return result
     }
 
     ///SO_ERROR: Returns and clears the current error (hence a function not a property)
