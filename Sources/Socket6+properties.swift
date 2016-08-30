@@ -96,11 +96,11 @@ extension Socket6 {
         set { setNoDelay(newValue) }
     }
 
-    ///IPV6_V6ONLY: only bind INET6 at wildcard bind. Socket6.bind() overrides this, unless you pass nil for reuseAddress.
+    ///IPV6_V6ONLY: only bind INET6 at wildcard bind
     public func setIP6Only(_ newValue: Bool) {
         try? setboolopt(Int32(IPPROTO_IPV6), Int32(IPV6_V6ONLY), newValue)
     }
-    ///IPV6_V6ONLY: only bind INET6 at wildcard bind. Socket6.bind() overrides this, unless you pass nil for reuseAddress.
+    ///IPV6_V6ONLY: only bind INET6 at wildcard bind
     public var ip6Only: Bool {
         get { return (try? getboolopt(Int32(IPPROTO_IPV6), Int32(IPV6_V6ONLY))) ?? false }
         set { setIP6Only(newValue) }

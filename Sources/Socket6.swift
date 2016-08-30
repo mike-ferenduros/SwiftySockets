@@ -129,9 +129,7 @@ public struct Socket6 : Hashable, RawRepresentable, CustomDebugStringConvertible
         return value
     }
 
-    ///Parameter ip6Only controls whether binding the socket to a wildcard address also accepts IPv4 connections.
-    public func bind(to address: sockaddr_in6, ip6Only: Bool? = false) throws {
-        if let ip6Only = ip6Only { setIP6Only(ip6Only) }
+    public func bind(to address: sockaddr_in6) throws {
         let result = address.withSockaddr { sock_bind(fd, $0, $1) }
         try check(result)
     }
