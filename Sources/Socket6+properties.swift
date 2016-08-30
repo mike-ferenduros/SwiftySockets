@@ -115,9 +115,9 @@ extension Socket6 {
     public var availableBytes: Int {
         #if os(Linux)
         var size: CInt = 0
-        let result = ioctl(fd, FIONREAD, &size)
+        let result = ioctl(fd, UInt(FIONREAD), &size)
         try! check(result)
-        return size
+        return Int(size)
         #else
         let size = try! getsockopt(SOL_SOCKET, SO_NREAD, UInt32.self)
         return Int(size)

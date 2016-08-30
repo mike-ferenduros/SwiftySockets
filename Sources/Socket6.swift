@@ -50,8 +50,8 @@ public struct Socket6 : Hashable, RawRepresentable, CustomDebugStringConvertible
     public init(rawValue: Int32) { self.init(fd: rawValue) }
 
     
-    private func check(_ result: Int) throws { try check(Int32(result)) }
-    private func check(_ result: Int32) throws {
+    internal func check(_ result: Int) throws { try check(Int32(result)) }
+    internal func check(_ result: Int32) throws {
         guard result >= 0 else {
             throw POSIXError(errno)
         }
