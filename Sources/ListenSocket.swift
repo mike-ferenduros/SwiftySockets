@@ -15,33 +15,37 @@ public class ListenSocket : DispatchSocket, DispatchSocketDelegate {
         return "ListenSocket(\(socket))"
     }
 
+    public struct Options : OptionSet {
+        public init(rawValue: Int) { self.rawValue = rawValue }
+        public let rawValue: Int
+        
+        ///SO_REUSEADDR: allow local address reuse
+        public static let reuseAddress = Options(rawValue: 1<<0)
+
+        ///IPV6_V6ONLY: only bind INET6 at wildcard bind
+        public static let ip6Only      = Options(rawValue: 1<<1)
+    }
+
     private let handler: (Socket6)->()
 
-    public required init(socket: Socket6, handler: @escaping (Socket6)->()) throws {
+    public required init(address: sockaddr_in6, options: Options = [], handler: @escaping (Socket6)->()) throws {
+        var s = try Socket6(type: .stream)
+        s.reuseAddress = options.contains(.reuseAddress)
+        s.ip6Only = options.contains(.ip6Only)
+        try s.bind(to: address)
         self.handler = handler
-        super.init(socket: socket)
+        super.init(socket: s)
         self.delegate = self
         try socket.listen()
         self.notifyReadable = true
     }
 
-    public struct ListenSocketOptions : OptionSet {
-        public init(rawValue: Int) { self.rawValue = rawValue }
-        public let rawValue: Int
-        public static let reuseAddress = ListenSocketOptions(rawValue: 1<<0)
-        public static let ip6Only      = ListenSocketOptions(rawValue: 1<<1)
-    }
-
-    public convenience init(address: sockaddr_in6, options: ListenSocketOptions = [], handler: @escaping (Socket6)->()) throws {
-        var s = Socket6(type: .stream)
-        s.reuseAddress = options.contains(.reuseAddress)
-        s.ip6Only = options.contains(.ip6Only)
-        try s.bind(to: address)
-        try self.init(socket: s, handler: handler)
-    }
-
-    public convenience init(port: UInt16 = 0, options: ListenSocketOptions = [], handler: @escaping (Socket6)->()) throws {
+    public convenience init(port: UInt16, options: Options = [], handler: @escaping (Socket6)->()) throws {
         try self.init(address: sockaddr_in6.any(port: port), options: options, handler: handler)
+    }
+
+    public convenience init(options: Options = [], handler: @escaping (Socket6)->()) throws {
+        try self.init(address: sockaddr_in6.any(), options: options, handler: handler)
     }
 
     public func dispatchSocketIsReadable(_socket: DispatchSocket, count: Int) {

@@ -159,20 +159,22 @@ public class StreamSocket : Hashable, CustomDebugStringConvertible, DispatchSock
 extension StreamSocket {
     public static func connect(to address: sockaddr_in6, completion: @escaping (StreamSocket?,Error?)->()) {
 
-        let sock = Socket6(type: .stream)
+        do {
+            let sock = try Socket6(type: .stream)
 
-        DispatchQueue.global().async {
-            do {
-                try sock.connect(to: address)
-                DispatchQueue.main.async {
-                    completion(StreamSocket(socket: sock), nil)
-                }
-            } catch let err {
-                DispatchQueue.main.async {
-                    try? sock.close()
-                    completion(nil, err)
+            DispatchQueue.global().async {
+                do {
+                    try sock.connect(to: address)
+                    DispatchQueue.main.async {
+                        completion(StreamSocket(socket: sock), nil)
+                    }
+                } catch let err {
+                    DispatchQueue.main.async {
+                        try? sock.close()
+                        completion(nil, err)
+                    }
                 }
             }
-        }
+        }  catch let err { completion(nil, err) }
     }
 }
