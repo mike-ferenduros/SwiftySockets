@@ -249,4 +249,14 @@ public struct Socket6 : Hashable, RawRepresentable, CustomDebugStringConvertible
         let outbuffer = result == buffer.count ? buffer : buffer.subdata(in: 0..<result)
         return (outbuffer, address)
     }
+
+    ///Receive all available data (which may be 0-byte datagram)
+    public func recv(flags: RecvFlags = []) throws -> Data {
+        return try recv(length: self.availableBytes, flags: flags)
+    }
+
+    ///Receive all available data (which may be 0-byte datagram)
+    public func recvfrom(flags: RecvFlags = []) throws -> (Data,sockaddr_in6) {
+        return try recvfrom(length: self.availableBytes, flags: flags)
+    }
 }

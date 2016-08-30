@@ -108,9 +108,21 @@ extension Socket6 {
 
     ///SO_ACCEPTCONN: socket has had listen()
     public var isListening: Bool {
-        get { return (try? getboolopt(SOL_SOCKET, SO_ACCEPTCONN)) ?? false }
+        return (try? getboolopt(SOL_SOCKET, SO_ACCEPTCONN)) ?? false
     }
 
+    ///SO_NREAD / FIONREAD: Bytes available to read in the next recv call (ie. datagram size if UDP). 
+    public var availableBytes: Int {
+        #if os(Linux)
+        var size: CInt = 0
+        let result = ioctl(fd, FIONREAD, &size)
+        try! check(result)
+        return size
+        #else
+        let size = try! getsockopt(SOL_SOCKET, SO_NREAD, UInt32.self)
+        return Int(size)
+        #endif
+    }
 
     #if !os(Linux)
     public enum NetServiceType: RawRepresentable {
