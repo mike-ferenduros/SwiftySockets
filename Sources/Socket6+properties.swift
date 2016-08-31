@@ -71,6 +71,27 @@ extension Socket6 {
         return SocketStatus(rawValue: pfd.revents)
     }
 
+    ///Sets the socket to blocking (the default), or non-blocking mode.
+    public func setNonBlocking(_ value: Bool) throws {
+        var flags = fcntl(fd, F_GETFL)
+        guard flags >= 0 else { return }
+        if value {
+            flags |= O_NONBLOCK
+        } else {
+            flags &= ~O_NONBLOCK
+        }
+        let result = fcntl(fd, F_SETFL, flags)
+        try check(result)
+    }
+    ///The socket's non-blocking mode
+    public var nonBlocking: Bool {
+        get {
+            let flags = fcntl(fd, F_GETFL, 0)
+            return (flags >= 0) && ((flags & O_NONBLOCK) != 0)
+        }
+        set { try? setNonBlocking(newValue) }
+    }
+
     ///SO_ERROR: Returns and clears the current error (hence a function not a property)
     public func getError() -> POSIXError? {
         guard let e = try? getsockopt(.socket, SO_ERROR, Int32.self) else { return nil }
