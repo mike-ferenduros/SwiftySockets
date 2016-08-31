@@ -338,7 +338,7 @@ public struct Socket6 : Hashable, RawRepresentable, CustomDebugStringConvertible
     If no pending connections are present on the queue, and the socket is not marked as nonblocking, `accept()` blocks the caller until a connection is present.
     If the socket is marked nonblocking and no pending connections are present on the queue, `accept()` fails with the error EAGAIN or EWOULDBLOCK.
 
-    In order to be notified of incoming connections on a socket, you can use DispatchSocket. A dispatchSocketIsReadable delegate event will be delivered when a new connection is attempted and you may then call `accept()` to get a socket for that connection.
+    In order to be notified of incoming connections on a socket, you can use `DispatchSocket`. A `dispatchSocketIsReadable` delegate event will be delivered when a new connection is attempted and you may then call `accept()` to get a socket for that connection.
     
     - Returns: A new connected socket
     
@@ -370,16 +370,18 @@ public struct Socket6 : Hashable, RawRepresentable, CustomDebugStringConvertible
         public let rawValue: Int32
 
         //Only the intersection of Linux & Mac flags for now
+        ///Send out-of-band data on sockets that support this notion (e.g., of type `.stream`); the underlying protocol must also support out-of-band data.
         public static let oob          = SendOptions(rawValue: Int32(MSG_OOB))
+        ///Don't use a gateway to send out the packet, send to hosts only on directly connected networks.  This is usually used only by diagnostic or routing programs.  This is defined only for protocol families that route; packet sockets don't.
         public static let dontRoute    = SendOptions(rawValue: Int32(MSG_DONTROUTE))
+        ///Terminates a record (when this notion is supported, as for sockets of type `.seqPacket`).
         public static let eor          = SendOptions(rawValue: Int32(MSG_EOR))
+        ///Enable nonblocking operation; if the operation would block, `POSIXError` exception `EAGAIN` or `EWOULDBLOCK` is thrown.
         public static let dontWait     = SendOptions(rawValue: Int32(MSG_DONTWAIT))
     }
 
     /**
     Transmit a message to another socket.
-
-   The socket must be in a connected state (so that the intended recipient is known).
 
     If the message is too long to pass atomically through the underlying protocol, the `POSIXError` `EMSGSIZE` is thrown, and the message is not transmitted.
 
@@ -390,16 +392,14 @@ public struct Socket6 : Hashable, RawRepresentable, CustomDebugStringConvertible
     In nonblocking mode it would fail with the `POSIXError` exception `EAGAIN` or `EWOULDBLOCK` in this case.
 
     The `DispatchSocket` class may be used to monitor when it is possible to send data.
-    
+
     - Parameter buffer: A pointer to the message data to be sent
     
     - Parameter length: The length of the message in bytes
-    
-     - Parameter options
-        - `.oob`:  Send out-of-band data on sockets that support this notion (e.g., of type `.stream`); the underlying protocol must also support out-of-band data.
-        - `.dontRoute`: Don't use a gateway to send out the packet, send to hosts only on directly connected networks.  This is usually used only by diagnostic or routing programs.  This is defined only for protocol families that route; packet sockets don't.
-        - `.eor`: Terminates a record (when this notion is supported, as for sockets of type `.seqPacket`).
-        - `.dontWait`: Enable nonblocking operation; if the operation would block, `POSIXError` exception `EAGAIN` or `EWOULDBLOCK` is thrown.
+
+    - Parameter address: The destination address (if the socket is not connected), or nil (if is is connected)
+
+    - Parameter options: The type of message transmission.
 
     - Returns: The number of bytes sent
 
@@ -419,26 +419,56 @@ public struct Socket6 : Hashable, RawRepresentable, CustomDebugStringConvertible
         - `EOPNOTSUPP`: One of the specified flags is inappropriate for the socket type.
         - `EPIPE`: The local end has been shut down on a connection oriented socket.
     */
-    public func send(buffer: UnsafeRawPointer, length: Int, options: SendOptions = []) throws -> Int {
-        let result = sock_send(fd, buffer, length, options.rawValue)
+    public func send(buffer: UnsafeRawPointer, length: Int, options: SendOptions = [], to address: sockaddr_in6? = nil) throws -> Int {
+        let result: Int
+        if let address = address {
+            result = address.withSockaddr { sock_sendto(fd, buffer, length, options.rawValue, $0, $1) }
+        } else {
+            result = sock_send(fd, buffer, length, options.rawValue)
+        }
         try check(result)
         return Int(result)
     }
 
-    public func send(buffer: Data, options: SendOptions = []) throws -> Int {
-        let result = buffer.withUnsafeBytes { sock_send(fd, $0, buffer.count, options.rawValue) }
-        try check(result)
-        return Int(result)
-    }
+    /**
+    Transmit a message to another socket.
 
-    public func send(buffer: UnsafeRawPointer, length: Int, to address: sockaddr_in6, options: SendOptions = []) throws -> Int {
-        let result = address.withSockaddr { sock_sendto(fd, buffer, length, options.rawValue, $0, $1) }
-        try check(result)
-        return Int(result)
-    }
+    If the message is too long to pass atomically through the underlying protocol, the `POSIXError` `EMSGSIZE` is thrown, and the message is not transmitted.
 
-    public func send(buffer: Data, to address: sockaddr_in6, options: SendOptions = []) throws -> Int {
-        return try buffer.withUnsafeBytes { try send(buffer: $0, length: buffer.count, to: address, options: options) }
+    No indication of failure to deliver is implicit in a `send()`. Locally detected errors are indicated by an exception.
+
+    When the message does not fit into the send buffer of the socket, `send()` normally blocks, unless the socket has been placed in nonblocking I/O mode.
+
+    In nonblocking mode it would fail with the `POSIXError` exception `EAGAIN` or `EWOULDBLOCK` in this case.
+
+    The `DispatchSocket` class may be used to monitor when it is possible to send data.
+
+    - Parameter buffer: The message data to be sent
+    
+    - Parameter address: The destination address (if the socket is not connected), or nil (if is is connected)
+
+    - Parameter options: The type of message transmission.
+
+    - Returns: The number of bytes sent
+
+    - Throws: POSIXError
+        - `EACCES`: (For UDP sockets) An attempt was made to send to a network/broadcast address as though it was a unicast address.
+        - `EAGAIN` or `EWOULDBLOCK`: The socket is marked nonblocking and the requested operation would block.
+        - `EBADF`: `fd` is not a valid open file descriptor.
+        - `ECONNRESET`:  Connection reset by peer.
+        - `EDESTADDRREQ`: The socket is not connection-mode, and no peer address is set.
+        - `EINTR`: A signal occurred before any data was transmitted
+        - `EINVAL`: Invalid argument passed.
+        - `EMSGSIZE`: The socket type requires that message be sent atomically, and the size of the message to be sent made this impossible.
+        - `ENOBUFS`: The output queue for a network interface was full.  This generally indicates that the interface has stopped sending, but may be caused by transient congestion.
+        - `ENOMEM`: No memory available.
+        - `ENOTCONN` The socket is not connected.
+        - `ENOTSOCK`: `fd` does not refer to a socket.
+        - `EOPNOTSUPP`: One of the specified flags is inappropriate for the socket type.
+        - `EPIPE`: The local end has been shut down on a connection oriented socket.
+    */
+    public func send(buffer: Data, options: SendOptions = [], to address: sockaddr_in6? = nil) throws -> Int {
+        return try buffer.withUnsafeBytes { try send(buffer: $0, length: buffer.count, options: options, to: address) }
     }
 
 
@@ -448,15 +478,18 @@ public struct Socket6 : Hashable, RawRepresentable, CustomDebugStringConvertible
         public let rawValue: Int32
 
         //Only the intersection of Linux & Mac flags for now
+        ///Request receipt of out-of-band data that would not be received in the normal data stream.  Some protocols place expedited data at the head of the normal data queue, and thus this flag cannot be used with such protocols.
         public static let oob          = RecvOptions(rawValue: Int32(MSG_OOB))
+        ///Cause the receive operation to return data from the beginning of the receive queue without removing that data from the queue.  Thus, a subsequent `recv()` call will return the same data.
         public static let peek         = RecvOptions(rawValue: Int32(MSG_PEEK))
+        ///Request that the operation block until the full request is satisfied.  However, the call may still return less data than requested if a signal is caught, an error or disconnect occurs, or the next data to be received is of a different type than that returned.  This option has no effect for datagram sockets.
         public static let waitAll      = RecvOptions(rawValue: Int32(MSG_WAITALL))
+        ///Enable nonblocking operation; if the operation would block, `POSIXError` `EAGAIN` or `EWOULDBLOCK` is thrown.
         public static let dontWait     = RecvOptions(rawValue: Int32(MSG_DONTWAIT))
     }
 
     /**
-    Receive messages from a socket.
-    `recv()` may be used to receive data on both connectionless and connection-oriented sockets.  
+    Receive messages from a connection-mode or connectionless-mode socket. It is normally used with connected sockets because it does not permit the application to retrieve the source address of received data.
 
     If a message is too long to fit in the supplied buffer, excess bytes may be discarded depending on the type of socket the message is received from.
 
@@ -470,11 +503,7 @@ public struct Socket6 : Hashable, RawRepresentable, CustomDebugStringConvertible
 
     - Parameter length: The maximum bytecount to receive. `buffer` must point to at least this many bytes of writable memory.
 
-    - Parameter options
-        - `.oob`: Request receipt of out-of-band data that would not be received in the normal data stream.  Some protocols place expedited data at the head of the normal data queue, and thus this flag cannot be used with such protocols.
-        - `.peek`:  Cause the receive operation to return data from the beginning of the receive queue without removing that data from the queue.  Thus, a subsequent `recv()` call will return the same data.
-        - `.waitAll`: Request that the operation block until the full request is satisfied.  However, the call may still return less data than requested if a signal is caught, an error or disconnect occurs, or the next data to be received is of a different type than that returned.  This option has no effect for datagram sockets.
-        - `.dontWait`: Enable nonblocking operation; if the operation would block, `POSIXError` `EAGAIN` or `EWOULDBLOCK` is thrown.
+    - Parameter options: The type of message reception
 
     - Returns:
         The number of bytes received.
@@ -483,7 +512,7 @@ public struct Socket6 : Hashable, RawRepresentable, CustomDebugStringConvertible
 
         Datagram sockets permit zero-length datagrams. When such a datagram is received, the return value is 0.
 
-       The value 0 may also be returned from a stream socket parameter `length` was 0.
+       The value 0 may also be returned from a stream socket if the parameter `length` was 0.
 
     - Throws: POSIXError
         - `EAGAIN` or `EWOULDBLOCK`: The socket is marked nonblocking and the receive operation would block, or a receive timeout had been set and the timeout expired before data was received.
@@ -501,6 +530,39 @@ public struct Socket6 : Hashable, RawRepresentable, CustomDebugStringConvertible
         return Int(result)
     }
 
+    /**
+    Receive a message from a connection-mode or connectionless-mode socket. It is normally used with connected sockets because it does not permit the application to retrieve the source address of received data.
+
+    If a message is longer than the requested length, excess bytes may be discarded depending on the type of socket the message is received from.
+
+    If no messages are available at the socket, `recv()` waits for a message to arrive, unless the socket is nonblocking, in which case the `POSIXError` `EAGAIN` or `EWOULDBLOCK` is thrown.
+    
+    `recv` normally return any data available, up to the requested amount, rather than waiting for receipt of the full amount requested.
+
+    An application can use `DispatchSocket` to determine when more data arrives on a socket.
+
+    - Parameter length: The maximum bytecount to receive.
+
+    - Parameter options: The type of message reception
+
+    - Returns:
+        A `Data` containing up to `length` bytes of received data.
+
+        When a stream socket peer has performed an orderly shutdown, the return value will be a zero-length `Data`
+
+        Datagram sockets permit zero-length datagrams. When such a datagram is received, the return value is a zero-length `Data`
+
+       A zero-length `Data` may also be returned from a stream socket if the parameter `length` was 0.
+
+    - Throws: POSIXError
+        - `EAGAIN` or `EWOULDBLOCK`: The socket is marked nonblocking and the receive operation would block, or a receive timeout had been set and the timeout expired before data was received.
+        - `EBADF`: `fd` is an invalid file descriptor.
+        - `ECONNREFUSED`:  A remote host refused to allow the network connection (typically because it is not running the requested service).
+        - `EINTR`: The receive was interrupted by delivery of a signal before any data were available.
+        - `EINVAL`: Invalid argument passed.
+        - `ENOTCONN`: The socket is associated with a connection-oriented protocol and has not been connected.
+        - `ENOTSOCK`: `fd` does not refer to a socket.
+    */
     public func recv(length: Int, options: RecvOptions = []) throws -> Data {
         var buffer = Data(count: length)
         let result = buffer.withUnsafeMutableBytes { sock_recv(fd, $0, length, options.rawValue) }
@@ -508,6 +570,42 @@ public struct Socket6 : Hashable, RawRepresentable, CustomDebugStringConvertible
         return result == buffer.count ? buffer : buffer.subdata(in: 0..<result)
     }
 
+    /**
+    Receive a message from a connection-mode or connectionless-mode socket. It is normally used with connectionless-mode sockets because it permits the application to retrieve the source address of received data.
+
+    If a message is too long to fit in the supplied buffer, excess bytes may be discarded depending on the type of socket the message is received from.
+
+    If no messages are available at the socket, `recvfrom()` waits for a message to arrive, unless the socket is nonblocking, in which case the `POSIXError` `EAGAIN` or `EWOULDBLOCK` is thrown.
+    
+    `recvfrom` normally return any data available, up to the requested amount, rather than waiting for receipt of the full amount requested.
+
+    An application can use `DispatchSocket` to determine when more data arrives on a socket.
+
+    - Parameter buffer: A pointer to memory to receive the message.
+
+    - Parameter length: The maximum bytecount to receive. `buffer` must point to at least this many bytes of writable memory.
+
+    - Parameter options: The type of message reception
+
+    - Returns:
+        A tuple containing the number of bytes received, and the address it was received from.
+
+        When a stream socket peer has performed an orderly shutdown, the returned length value will be 0.
+
+        Datagram sockets permit zero-length datagrams. When such a datagram is received, the returned length value is 0.
+
+       The returned length value may also be 0 from a stream socket if the parameter `length` was 0.
+
+    - Throws: POSIXError
+        - `EAGAIN` or `EWOULDBLOCK`: The socket is marked nonblocking and the receive operation would block, or a receive timeout had been set and the timeout expired before data was received.
+        - `EBADF`: `fd` is an invalid file descriptor.
+        - `ECONNREFUSED`:  A remote host refused to allow the network connection (typically because it is not running the requested service).
+        - `EFAULT`: The receive buffer pointer points outside the process's address space.
+        - `EINTR`: The receive was interrupted by delivery of a signal before any data were available.
+        - `EINVAL`: Invalid argument passed.
+        - `ENOTCONN`: The socket is associated with a connection-oriented protocol and has not been connected.
+        - `ENOTSOCK`: `fd` does not refer to a socket.
+    */
     public func recvfrom(buffer: UnsafeMutableRawPointer, length: Int, options: RecvOptions = []) throws -> (Int,sockaddr_in6) {
         var addr = sockaddr_in6()
         let result = addr.withMutableSockaddr { sock_recvfrom(fd, buffer, length, options.rawValue, $0, $1) }
@@ -515,6 +613,40 @@ public struct Socket6 : Hashable, RawRepresentable, CustomDebugStringConvertible
         return (result, addr)
     }
 
+    /**
+    Receive a message from a connection-mode or connectionless-mode socket. It is normally used with connectionless-mode sockets because it permits the application to retrieve the source address of received data.
+
+    If a message is too long to fit in the supplied buffer, excess bytes may be discarded depending on the type of socket the message is received from.
+
+    If no messages are available at the socket, `recfromv()` waits for a message to arrive, unless the socket is nonblocking, in which case the `POSIXError` `EAGAIN` or `EWOULDBLOCK` is thrown.
+    
+    `recvfrom` normally return any data available, up to the requested amount, rather than waiting for receipt of the full amount requested.
+
+    An application can use `DispatchSocket` to determine when more data arrives on a socket.
+
+    - Parameter length: The maximum bytecount to receive.
+
+    - Parameter options: The type of message reception
+
+    - Returns:
+        A tuple containing a `Data` with up to `length` bytes or received data, and the address it was received from.
+
+        When a stream socket peer has performed an orderly shutdown, the returned `Data` will be 0-length.
+
+        Datagram sockets permit zero-length datagrams. When such a datagram is received, the returned `Data` is 0-length.
+
+       The returned `Data` may also be 0-length from a stream socket if the parameter `length` was 0.
+
+    - Throws: POSIXError
+        - `EAGAIN` or `EWOULDBLOCK`: The socket is marked nonblocking and the receive operation would block, or a receive timeout had been set and the timeout expired before data was received.
+        - `EBADF`: `fd` is an invalid file descriptor.
+        - `ECONNREFUSED`:  A remote host refused to allow the network connection (typically because it is not running the requested service).
+        - `EFAULT`: The receive buffer pointer points outside the process's address space.
+        - `EINTR`: The receive was interrupted by delivery of a signal before any data were available.
+        - `EINVAL`: Invalid argument passed.
+        - `ENOTCONN`: The socket is associated with a connection-oriented protocol and has not been connected.
+        - `ENOTSOCK`: `fd` does not refer to a socket.
+    */
     public func recvfrom(length: Int, options: RecvOptions = []) throws -> (Data,sockaddr_in6) {
         var buffer = Data(count: length)
         var address = sockaddr_in6()
@@ -528,12 +660,64 @@ public struct Socket6 : Hashable, RawRepresentable, CustomDebugStringConvertible
         return (outbuffer, address)
     }
 
-    ///Receive all available data (which may be 0-byte datagram)
+    /**
+    Receive a message from a connection-mode or connectionless-mode socket. It is normally used with connected sockets because it does not permit the application to retrieve the source address of received data.
+
+    If no messages are available at the socket, `recv()` waits for a message to arrive, unless the socket is nonblocking, in which case the `POSIXError` `EAGAIN` or `EWOULDBLOCK` is thrown.
+    
+    An application can use `DispatchSocket` to determine when more data arrives on a socket.
+
+    - Parameter options: The type of message reception
+
+    - Returns:
+        A `Data` containing the received data.
+
+        When a stream socket peer has performed an orderly shutdown, the return value will be a zero-length `Data`
+
+        Datagram sockets permit zero-length datagrams. When such a datagram is received, the return value is a zero-length `Data`
+
+       A zero-length `Data` may also be returned from a stream socket if the parameter `length` was 0.
+
+    - Throws: POSIXError
+        - `EAGAIN` or `EWOULDBLOCK`: The socket is marked nonblocking and the receive operation would block, or a receive timeout had been set and the timeout expired before data was received.
+        - `EBADF`: `fd` is an invalid file descriptor.
+        - `ECONNREFUSED`:  A remote host refused to allow the network connection (typically because it is not running the requested service).
+        - `EINTR`: The receive was interrupted by delivery of a signal before any data were available.
+        - `EINVAL`: Invalid argument passed.
+        - `ENOTCONN`: The socket is associated with a connection-oriented protocol and has not been connected.
+        - `ENOTSOCK`: `fd` does not refer to a socket.
+    */
     public func recv(options: RecvOptions = []) throws -> Data {
         return try recv(length: self.availableBytes, options: options)
     }
 
-    ///Receive all available data (which may be 0-byte datagram)
+    /**
+    Receive a message from a connection-mode or connectionless-mode socket. It is normally used with connectionless-mode sockets because it permits the application to retrieve the source address of received data.
+
+    If no messages are available at the socket, `recfromv()` waits for a message to arrive, unless the socket is nonblocking, in which case the `POSIXError` `EAGAIN` or `EWOULDBLOCK` is thrown.
+
+    An application can use `DispatchSocket` to determine when more data arrives on a socket.
+
+    - Parameter options: The type of message reception
+
+    - Returns:
+        A tuple containing a `Data` with the received data, and the address it was received from.
+
+        When a stream socket peer has performed an orderly shutdown, the returned `Data` will be 0-length.
+
+        Datagram sockets permit zero-length datagrams. When such a datagram is received, the returned `Data` is 0-length.
+
+       The returned `Data` may also be 0-length from a stream socket if the parameter `length` was 0.
+
+    - Throws: POSIXError
+        - `EAGAIN` or `EWOULDBLOCK`: The socket is marked nonblocking and the receive operation would block, or a receive timeout had been set and the timeout expired before data was received.
+        - `EBADF`: `fd` is an invalid file descriptor.
+        - `ECONNREFUSED`:  A remote host refused to allow the network connection (typically because it is not running the requested service).
+        - `EINTR`: The receive was interrupted by delivery of a signal before any data were available.
+        - `EINVAL`: Invalid argument passed.
+        - `ENOTCONN`: The socket is associated with a connection-oriented protocol and has not been connected.
+        - `ENOTSOCK`: `fd` does not refer to a socket.
+    */
     public func recvfrom(options: RecvOptions = []) throws -> (Data,sockaddr_in6) {
         return try recvfrom(length: self.availableBytes, options: options)
     }
