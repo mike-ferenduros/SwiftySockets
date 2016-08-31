@@ -69,7 +69,7 @@ public struct Socket6 : Hashable, RawRepresentable, CustomDebugStringConvertible
         ///Supports datagrams (connectionless, unreliable messages of a fixed maximum length).
         case datagram
         ///Provides a reliable datagram layer that does not guarantee ordering.
-        case reliableDatagram
+        case reliableMessage
         ///Provides a sequenced, reliable, two-way connection-based data transmission path for datagrams of fixed maximum length; a consumer is required to read an entire packet with each input system call.
         case seqPacket
 
@@ -78,7 +78,7 @@ public struct Socket6 : Hashable, RawRepresentable, CustomDebugStringConvertible
                 case socktype(SOCK_RAW):       self = .raw
                 case socktype(SOCK_STREAM):    self = .stream
                 case socktype(SOCK_DGRAM):     self = .datagram
-                case socktype(SOCK_RDM):       self = .reliableDatagram
+                case socktype(SOCK_RDM):       self = .reliableMessage
                 case socktype(SOCK_SEQPACKET): self = .seqPacket
                 default: return nil
             }
@@ -88,7 +88,7 @@ public struct Socket6 : Hashable, RawRepresentable, CustomDebugStringConvertible
                 case .raw:              return socktype(SOCK_RAW)
                 case .stream:           return socktype(SOCK_STREAM)
                 case .datagram:         return socktype(SOCK_DGRAM)
-                case .reliableDatagram: return socktype(SOCK_RDM)
+                case .reliableMessage:  return socktype(SOCK_RDM)
                 case .seqPacket:        return socktype(SOCK_SEQPACKET)
             }
         }
@@ -225,11 +225,11 @@ public struct Socket6 : Hashable, RawRepresentable, CustomDebugStringConvertible
     
     - Throws: POSIXError
         - `EBADF`: `fd` is not a valid file descriptor.
-        - `EINVAL` Invalid value, or type is of invalid size for the specified option.
+        - `EINVAL` `type` is of invalid size for the specified option.
         - `ENOPROTOOPT`: The option is unknown at the level indicated.
         - `ENOTSOCK`: `fd` does not refer to a socket.
 
-    - Returns: The retrieved option value
+    - Returns: The retrieved option value of type `type`
     */
     public func getsockopt<T>(_ level: SocketOptionLevel, _ option: Int32, _ type: T.Type) throws -> T {
         //There must be a better way to make a T :(
@@ -246,7 +246,7 @@ public struct Socket6 : Hashable, RawRepresentable, CustomDebugStringConvertible
     bind() assigns the address specified by `address` to the socket.
     Traditionally, this operation is called “assigning a name to a socket”.
 
-    It is normally necessary to assign a local address using bind() before a .stream type socket may receive connections.
+    It is normally necessary to assign a local address using bind() before a `.stream` type socket may receive connections.
 
     - Parameter address: The address to assign to the socket
 
@@ -267,7 +267,7 @@ public struct Socket6 : Hashable, RawRepresentable, CustomDebugStringConvertible
     /**
     Connects the socket to the address specified by `address`.
 
-    If the socket sockfd is of type `.datagram`, then `address` is the address to which datagrams are sent by default, and the only address from which datagrams are received.
+    If the socket is of datagram type, then `address` is the address to which datagrams are sent by default, and the only address from which datagrams are received.
     
     If the socket is of type `.stream` or `.seqPacket`, this call attempts to make a connection to the socket that is bound to the address specified by `address`.
 
@@ -311,11 +311,11 @@ public struct Socket6 : Hashable, RawRepresentable, CustomDebugStringConvertible
     }
 
     /** 
-    Marks the socket referred to as a passive socket, that is, as a socket that will be used to accept incoming connection requests using accept.
+    Marks the socket referred to as a passive socket, that is, as a socket that will be used to accept incoming connection requests using `accept`.
 
     The socket must be of type .stream or .seqPacket
 
-    - Parameter backlog: defines the maximum length to which the queue of pending connections may grow. If a connection request arrives when the queue is full, the client may receive an error with an indication of ECONNREFUSED or, if the underlying protocol supports retransmission, the request may be ignored so that a later reattempt at connection succeeds.
+    - Parameter backlog: The maximum length to which the queue of pending connections may grow. If a connection request arrives when the queue is full, the client may receive an error with an indication of ECONNREFUSED or, if the underlying protocol supports retransmission, the request may be ignored so that a later reattempt at connection succeeds.
     
     - Throws: POSIXError
         - `EADDRINUSE`: Another socket is already listening on the same port.
@@ -365,41 +365,41 @@ public struct Socket6 : Hashable, RawRepresentable, CustomDebugStringConvertible
 
 
 
-    public struct SendFlags : OptionSet {
+    public struct SendOptions : OptionSet {
         public init(rawValue: Int32) { self.rawValue = rawValue }
         public let rawValue: Int32
 
         //Only the intersection of Linux & Mac flags for now
-        public static let oob          = SendFlags(rawValue: Int32(MSG_OOB))
-        public static let dontRoute    = SendFlags(rawValue: Int32(MSG_DONTROUTE))
-        public static let eor          = SendFlags(rawValue: Int32(MSG_EOR))
-        public static let dontWait     = SendFlags(rawValue: Int32(MSG_DONTWAIT))
+        public static let oob          = SendOptions(rawValue: Int32(MSG_OOB))
+        public static let dontRoute    = SendOptions(rawValue: Int32(MSG_DONTROUTE))
+        public static let eor          = SendOptions(rawValue: Int32(MSG_EOR))
+        public static let dontWait     = SendOptions(rawValue: Int32(MSG_DONTWAIT))
     }
 
     /**
     Transmit a message to another socket.
 
-   `send()` may be used only when the socket is in a connected state (so that the intended recipient is known). 
+   The socket must be in a connected state (so that the intended recipient is known).
 
     If the message is too long to pass atomically through the underlying protocol, the `POSIXError` `EMSGSIZE` is thrown, and the message is not transmitted.
 
-    No indication of failure to deliver is implicit in a send(). Locally detected errors are indicated by an exception.
+    No indication of failure to deliver is implicit in a `send()`. Locally detected errors are indicated by an exception.
 
-    When the message does not fit into the send buffer of the socket, send() normally blocks, unless the socket has been placed in nonblocking I/O mode.
+    When the message does not fit into the send buffer of the socket, `send()` normally blocks, unless the socket has been placed in nonblocking I/O mode.
 
     In nonblocking mode it would fail with the `POSIXError` exception `EAGAIN` or `EWOULDBLOCK` in this case.
 
-    The `DispatchSocket` class may be used to determine when it is possible to send more data.
+    The `DispatchSocket` class may be used to monitor when it is possible to send data.
     
-    - Parameter buffer: A pointer to the message data to send
+    - Parameter buffer: A pointer to the message data to be sent
     
     - Parameter length: The length of the message in bytes
     
-     - Parameter flags
-        - `.oob`:  Sends out-of-band data on sockets that support this notion (e.g., of type `.stream`); the underlying protocol must also support out-of-band data.
+     - Parameter options
+        - `.oob`:  Send out-of-band data on sockets that support this notion (e.g., of type `.stream`); the underlying protocol must also support out-of-band data.
         - `.dontRoute`: Don't use a gateway to send out the packet, send to hosts only on directly connected networks.  This is usually used only by diagnostic or routing programs.  This is defined only for protocol families that route; packet sockets don't.
         - `.eor`: Terminates a record (when this notion is supported, as for sockets of type `.seqPacket`).
-        - `.dontWait`: Enables nonblocking operation; if the operation would block, `POSIXError` `EAGAIN` or `EWOULDBLOCK` is thrown.
+        - `.dontWait`: Enable nonblocking operation; if the operation would block, `POSIXError` exception `EAGAIN` or `EWOULDBLOCK` is thrown.
 
     - Returns: The number of bytes sent
 
@@ -419,39 +419,39 @@ public struct Socket6 : Hashable, RawRepresentable, CustomDebugStringConvertible
         - `EOPNOTSUPP`: One of the specified flags is inappropriate for the socket type.
         - `EPIPE`: The local end has been shut down on a connection oriented socket.
     */
-    public func send(buffer: UnsafeRawPointer, length: Int, flags: SendFlags = []) throws -> Int {
-        let result = sock_send(fd, buffer, length, flags.rawValue)
+    public func send(buffer: UnsafeRawPointer, length: Int, options: SendOptions = []) throws -> Int {
+        let result = sock_send(fd, buffer, length, options.rawValue)
         try check(result)
         return Int(result)
     }
 
-    public func send(buffer: Data, flags: SendFlags = []) throws -> Int {
-        let result = buffer.withUnsafeBytes { sock_send(fd, $0, buffer.count, flags.rawValue) }
+    public func send(buffer: Data, options: SendOptions = []) throws -> Int {
+        let result = buffer.withUnsafeBytes { sock_send(fd, $0, buffer.count, options.rawValue) }
         try check(result)
         return Int(result)
     }
 
-    public func send(buffer: UnsafeRawPointer, length: Int, to address: sockaddr_in6, flags: SendFlags = []) throws -> Int {
-        let result = address.withSockaddr { sock_sendto(fd, buffer, length, flags.rawValue, $0, $1) }
+    public func send(buffer: UnsafeRawPointer, length: Int, to address: sockaddr_in6, options: SendOptions = []) throws -> Int {
+        let result = address.withSockaddr { sock_sendto(fd, buffer, length, options.rawValue, $0, $1) }
         try check(result)
         return Int(result)
     }
 
-    public func send(buffer: Data, to address: sockaddr_in6, flags: SendFlags = []) throws -> Int {
-        return try buffer.withUnsafeBytes { try send(buffer: $0, length: buffer.count, to: address, flags: flags) }
+    public func send(buffer: Data, to address: sockaddr_in6, options: SendOptions = []) throws -> Int {
+        return try buffer.withUnsafeBytes { try send(buffer: $0, length: buffer.count, to: address, options: options) }
     }
 
 
 
-    public struct RecvFlags : OptionSet {
+    public struct RecvOptions : OptionSet {
         public init(rawValue: Int32) { self.rawValue = rawValue }
         public let rawValue: Int32
 
         //Only the intersection of Linux & Mac flags for now
-        public static let oob          = RecvFlags(rawValue: Int32(MSG_OOB))
-        public static let peek         = RecvFlags(rawValue: Int32(MSG_PEEK))
-        public static let waitAll      = RecvFlags(rawValue: Int32(MSG_WAITALL))
-        public static let dontWait     = RecvFlags(rawValue: Int32(MSG_DONTWAIT))
+        public static let oob          = RecvOptions(rawValue: Int32(MSG_OOB))
+        public static let peek         = RecvOptions(rawValue: Int32(MSG_PEEK))
+        public static let waitAll      = RecvOptions(rawValue: Int32(MSG_WAITALL))
+        public static let dontWait     = RecvOptions(rawValue: Int32(MSG_DONTWAIT))
     }
 
     /**
@@ -470,11 +470,11 @@ public struct Socket6 : Hashable, RawRepresentable, CustomDebugStringConvertible
 
     - Parameter length: The maximum bytecount to receive. `buffer` must point to at least this many bytes of writable memory.
 
-    - Parameter flags
-        - `.oob`: This option requests receipt of out-of-band data that would not be received in the normal data stream.  Some protocols place expedited data at the head of the normal data queue, and thus this flag cannot be used with such protocols.
-        - `.peek`:  This option causes the receive operation to return data from the beginning of the receive queue without removing that data from the queue.  Thus, a subsequent `recv()` call will return the same data.
-        - `.waitAll`: This option requests that the operation block until the full request is satisfied.  However, the call may still return less data than requested if a signal is caught, an error or disconnect occurs, or the next data to be received is of a different type than that returned.  This option has no effect for datagram sockets.
-        - `.dontWait`: Enables nonblocking operation; if the operation would block, `POSIXError` `EAGAIN` or `EWOULDBLOCK` is thrown.
+    - Parameter options
+        - `.oob`: Request receipt of out-of-band data that would not be received in the normal data stream.  Some protocols place expedited data at the head of the normal data queue, and thus this flag cannot be used with such protocols.
+        - `.peek`:  Cause the receive operation to return data from the beginning of the receive queue without removing that data from the queue.  Thus, a subsequent `recv()` call will return the same data.
+        - `.waitAll`: Request that the operation block until the full request is satisfied.  However, the call may still return less data than requested if a signal is caught, an error or disconnect occurs, or the next data to be received is of a different type than that returned.  This option has no effect for datagram sockets.
+        - `.dontWait`: Enable nonblocking operation; if the operation would block, `POSIXError` `EAGAIN` or `EWOULDBLOCK` is thrown.
 
     - Returns:
         The number of bytes received.
@@ -495,32 +495,32 @@ public struct Socket6 : Hashable, RawRepresentable, CustomDebugStringConvertible
         - `ENOTCONN`: The socket is associated with a connection-oriented protocol and has not been connected.
         - `ENOTSOCK`: `fd` does not refer to a socket.
     */
-    public func recv(buffer: UnsafeMutableRawPointer, length: Int, flags: RecvFlags = []) throws -> Int {
-        let result = sock_recv(fd, buffer, length, flags.rawValue)
+    public func recv(buffer: UnsafeMutableRawPointer, length: Int, options: RecvOptions = []) throws -> Int {
+        let result = sock_recv(fd, buffer, length, options.rawValue)
         try check(result)
         return Int(result)
     }
 
-    public func recv(length: Int, flags: RecvFlags = []) throws -> Data {
+    public func recv(length: Int, options: RecvOptions = []) throws -> Data {
         var buffer = Data(count: length)
-        let result = buffer.withUnsafeMutableBytes { sock_recv(fd, $0, length, flags.rawValue) }
+        let result = buffer.withUnsafeMutableBytes { sock_recv(fd, $0, length, options.rawValue) }
         try check(result)
         return result == buffer.count ? buffer : buffer.subdata(in: 0..<result)
     }
 
-    public func recvfrom(buffer: UnsafeMutableRawPointer, length: Int, flags: RecvFlags = []) throws -> (Int,sockaddr_in6) {
+    public func recvfrom(buffer: UnsafeMutableRawPointer, length: Int, options: RecvOptions = []) throws -> (Int,sockaddr_in6) {
         var addr = sockaddr_in6()
-        let result = addr.withMutableSockaddr { sock_recvfrom(fd, buffer, length, flags.rawValue, $0, $1) }
+        let result = addr.withMutableSockaddr { sock_recvfrom(fd, buffer, length, options.rawValue, $0, $1) }
         try check(result)
         return (result, addr)
     }
 
-    public func recvfrom(length: Int, flags: RecvFlags = []) throws -> (Data,sockaddr_in6) {
+    public func recvfrom(length: Int, options: RecvOptions = []) throws -> (Data,sockaddr_in6) {
         var buffer = Data(count: length)
         var address = sockaddr_in6()
         let result = buffer.withUnsafeMutableBytes { bytes in
             return address.withMutableSockaddr { addr, addrlen in
-                return sock_recvfrom(fd, bytes, length, flags.rawValue, addr, addrlen)
+                return sock_recvfrom(fd, bytes, length, options.rawValue, addr, addrlen)
             }
         }
         try check(result)
@@ -529,12 +529,12 @@ public struct Socket6 : Hashable, RawRepresentable, CustomDebugStringConvertible
     }
 
     ///Receive all available data (which may be 0-byte datagram)
-    public func recv(flags: RecvFlags = []) throws -> Data {
-        return try recv(length: self.availableBytes, flags: flags)
+    public func recv(options: RecvOptions = []) throws -> Data {
+        return try recv(length: self.availableBytes, options: options)
     }
 
     ///Receive all available data (which may be 0-byte datagram)
-    public func recvfrom(flags: RecvFlags = []) throws -> (Data,sockaddr_in6) {
-        return try recvfrom(length: self.availableBytes, flags: flags)
+    public func recvfrom(options: RecvOptions = []) throws -> (Data,sockaddr_in6) {
+        return try recvfrom(length: self.availableBytes, options: options)
     }
 }

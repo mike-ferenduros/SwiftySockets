@@ -87,7 +87,7 @@ public class StreamSocket : Hashable, CustomDebugStringConvertible, DispatchSock
             wanted -= r.count
         }
 
-        let buf = try socket.recv(length: min(available, wanted), flags: .dontWait)
+        let buf = try socket.recv(length: min(available, wanted), options: .dontWait)
         guard buf.count > 0 else { return }
 
         if readBuffer != nil {
@@ -112,7 +112,7 @@ public class StreamSocket : Hashable, CustomDebugStringConvertible, DispatchSock
     private func doWrite() throws {
 
         while let item = writeQueue.first {
-            let bytesWritten = try socket.send(buffer: item, flags: .dontWait)
+            let bytesWritten = try socket.send(buffer: item, options: .dontWait)
 
             if bytesWritten == item.count {
                 _ = writeQueue.removeFirst()
