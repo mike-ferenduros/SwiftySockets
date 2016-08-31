@@ -31,6 +31,46 @@ extension Socket6 {
         return result
     }
 
+    public struct SocketStatus : OptionSet {
+        public init(rawValue: Int16) { self.rawValue = rawValue }
+        public let rawValue: Int16
+
+        ///Data other than high-priority data may be read without blocking. For streams, this status is set even if the message is of zero length. This option is equivalent to [.nonPriorityReadable, .priorityReadable]
+        public static let readable              = SocketStatus(rawValue: Int16(POLLIN))
+        ///Normal data may be read without blocking. This status is set even if the message is of zero length.
+        public static let nonPriorityReadable   = SocketStatus(rawValue: Int16(POLLRDNORM))
+        ///Priority data may be read without blocking. This status is set even if the message is of zero length.
+        public static let priorityReadable      = SocketStatus(rawValue: Int16(POLLRDBAND))
+        ///High-priority data may be read without blocking. For streams, this status is set even if the message is of zero length.
+        public static let highPriorityReadable  = SocketStatus(rawValue: Int16(POLLPRI))
+        ///Normal data may be written without blocking.
+        public static let writable              = SocketStatus(rawValue: Int16(POLLOUT))
+        ///Priority data may be written.
+        public static let priorityWritable      = SocketStatus(rawValue: Int16(POLLWRBAND))
+        ///An error has occurred on the device or stream.
+        public static let error                 = SocketStatus(rawValue: Int16(POLLERR))
+        ///The device has been disconnected. This status and `.writable` are mutually-exclusive; a stream can never be writable if a hangup has occurred. However, this status and the readable statuses are not mutually-exclusive.
+        public static let disconnected          = SocketStatus(rawValue: Int16(POLLHUP))
+        ///`fd` is not a valid socket
+        public static let invalid               = SocketStatus(rawValue: Int16(POLLNVAL))
+
+        internal static let all: SocketStatus = [.readable, .nonPriorityReadable, .priorityReadable, .highPriorityReadable, .writable, .priorityWritable, .error, .disconnected, .invalid]
+    }
+
+    /**
+    Returns the socket's readable, writable, connected and error statuses.
+
+    A socket that is listening for connections shall indicate that it is ready for reading, once connections are available.
+
+    A socket that is connecting asynchronously shall indicate that it is ready for writing, once a connection has been established.
+    */
+    public var status: SocketStatus {
+        var pfd = pollfd(fd: fd, events: SocketStatus.all.rawValue, revents: 0)
+        let result = poll(&pfd, 1, 0)
+        guard result == 0 else { return .error }
+        return SocketStatus(rawValue: pfd.revents)
+    }
+
     ///SO_ERROR: Returns and clears the current error (hence a function not a property)
     public func getError() -> POSIXError? {
         guard let e = try? getsockopt(.socket, SO_ERROR, Int32.self) else { return nil }
