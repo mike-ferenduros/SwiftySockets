@@ -37,7 +37,7 @@ private func socktype(_ t: Int32) -> Int32 { return t }
 public struct Socket6 : Hashable, RawRepresentable, CustomDebugStringConvertible {
 
     public var debugDescription: String {
-        return "fd \(fd): \(sockname?.debugDescription ?? "unbound") -> \(peername?.debugDescription ?? "unconnected")"
+        return "\(type) fd \(fd): \(sockname?.debugDescription ?? "unbound") -> \(peername?.debugDescription ?? "unconnected")"
     }
 
     public var hashValue: Int { return rawValue.hashValue }
@@ -61,15 +61,13 @@ public struct Socket6 : Hashable, RawRepresentable, CustomDebugStringConvertible
     }
 
 
-    public enum SocketType : RawRepresentable {
+    public enum SocketType : RawRepresentable, CustomStringConvertible {
         ///Provides raw network protocol access.
         case raw
         ///Provides sequenced, reliable, two-way, connection-based byte streams.  An out-of-band data transmission mechanism may be supported.
         case stream
         ///Supports datagrams (connectionless, unreliable messages of a fixed maximum length).
         case datagram
-        ///Provides a reliable datagram layer that does not guarantee ordering.
-        case reliableMessage
         ///Provides a sequenced, reliable, two-way connection-based data transmission path for datagrams of fixed maximum length; a consumer is required to read an entire packet with each input system call.
         case seqPacket
 
@@ -78,7 +76,6 @@ public struct Socket6 : Hashable, RawRepresentable, CustomDebugStringConvertible
                 case socktype(SOCK_RAW):       self = .raw
                 case socktype(SOCK_STREAM):    self = .stream
                 case socktype(SOCK_DGRAM):     self = .datagram
-                case socktype(SOCK_RDM):       self = .reliableMessage
                 case socktype(SOCK_SEQPACKET): self = .seqPacket
                 default: return nil
             }
@@ -88,8 +85,16 @@ public struct Socket6 : Hashable, RawRepresentable, CustomDebugStringConvertible
                 case .raw:              return socktype(SOCK_RAW)
                 case .stream:           return socktype(SOCK_STREAM)
                 case .datagram:         return socktype(SOCK_DGRAM)
-                case .reliableMessage:  return socktype(SOCK_RDM)
                 case .seqPacket:        return socktype(SOCK_SEQPACKET)
+            }
+        }
+
+        public var description: String {
+            switch self {
+                case .raw:              return "Raw"
+                case .stream:           return "Stream"
+                case .datagram:         return "Datagram"
+                case .seqPacket:        return "SeqPacket"
             }
         }
     }
