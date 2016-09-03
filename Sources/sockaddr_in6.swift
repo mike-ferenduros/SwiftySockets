@@ -291,13 +291,13 @@ extension sockaddr_in6 {
         return results
     }
 
-    public static func getaddrinfo(hostname: String, port: UInt16, completion: @escaping ([sockaddr_in6], Error?)->()) {
+    public static func getaddrinfo(hostname: String, port: UInt16, completion: @escaping (Result<[sockaddr_in6], Error>)->()) {
         DispatchQueue.global().async {
             do {
                 let results = try getaddrinfo(hostname: hostname, port: port)
-                DispatchQueue.main.async { completion(results, nil) }
+                DispatchQueue.main.async { completion(.success(results)) }
             } catch let e {
-                DispatchQueue.main.async { completion([], e) }
+                DispatchQueue.main.async { completion(.failure(e)) }
             }
         }
     }

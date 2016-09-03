@@ -9,25 +9,59 @@
 import Foundation
 import Dispatch
 
-public protocol DispatchSocketDelegate : class {
-    func dispatchSocketIsReadable(_socket: DispatchSocket, count: Int)
-    func dispatchSocketIsWritable(_socket: DispatchSocket)
-    func dispatchSocketDisconnected(_socket: DispatchSocket)
-}
+
 
 /**
     Socket6 wrapper that
      - Closes the socket on deinit
-     - Notifies a delegate on readable / writable / disconnect events
-
-    Readable and disconnect delegate methods are dispatched only when notifyReadable=true (default false)
-    Writable delegate methods are dispatched only when notifyWritable=true (default false)
-    If enabled, readable / writable methods are called repeatedly, on the main queue, so long as the socket is readable / writable
+     - Invokes callbacks on readable / writable events
+     - Performs async reads (one at a time)
+     - Performs queued, async writes
 */
 public class DispatchSocket : Hashable, CustomDebugStringConvertible {
 
+    //Dedupe some read/write code, hide a crash-bug
+    private class Source {
+        var source: DispatchSourceProtocol?
+        let makeSource: ()->DispatchSourceProtocol
+
+        var eventHandler: (()->())? = nil { didSet { source?.setEventHandler(handler: eventHandler) } }
+
+        init(makeSource: @escaping ()->DispatchSourceProtocol) {
+            self.makeSource = makeSource
+        }
+
+        var running = false {
+            didSet { switch (oldValue, running) {
+                case (false, true):
+                    if source == nil {
+                        source = makeSource()
+                        source?.setEventHandler(handler: self.eventHandler)
+                    }
+                    source!.resume()
+                case (true, false):
+                    source?.suspend()
+
+                default: break
+            } }
+        }
+
+        func cancel() {
+            self.running = false
+            self.eventHandler = nil
+
+            //Keep source alive until cancel handler has been called :(
+            var s = source
+            self.source = nil
+            s?.setCancelHandler { s = nil }
+            s?.cancel()
+        }
+    }
+
+
+
     public let socket: Socket6
-    public weak var delegate: DispatchSocketDelegate?
+    public let type: Socket6.SocketType
     public private(set) var isOpen = true
 
     public var hashValue: Int { return self.socket.hashValue }
@@ -37,74 +71,99 @@ public class DispatchSocket : Hashable, CustomDebugStringConvertible {
         return "DispatchSocket(\(socket.debugDescription))"
     }
 
-    private let rsource: DispatchSourceRead
-    private let wsource: DispatchSourceWrite
+    private let rs, ws: Source
 
-    ///Also controls whether delegate gets disconnected events
-    public var notifyReadable: Bool = false {
-        didSet {
-            guard isOpen else { return }
-            switch (oldValue, notifyReadable) {
-                case (false, true): rsource.resume()
-                case (true, false): rsource.suspend()
-                default: return
-            }
-        }
-    }
+    public var onReadable: ((Int)->())? { didSet { self.rs.running = isOpen && (onReadable != nil) } }
+    public var onWritable: (()->())?    { didSet { self.ws.running = isOpen && (onWritable != nil) } }
 
-    public var notifyWritable: Bool = false {
-        didSet {
-            guard isOpen else { return }
-            switch (oldValue, notifyWritable) {
-                case (false, true): wsource.resume()
-                case (true, false): wsource.suspend()
-                default: return
-            }
-        }
-    }
-
-    public init(socket: Socket6, delegate: DispatchSocketDelegate? = nil) {
+    public init(socket: Socket6) {
         self.socket = socket
-        self.delegate = delegate
-        rsource = DispatchSource.makeReadSource(fileDescriptor: socket.fd, queue: DispatchQueue.main)
-        wsource = DispatchSource.makeWriteSource(fileDescriptor: socket.fd, queue: DispatchQueue.main)
+        self.type = socket.type
 
-        rsource.setEventHandler { [weak self] in
-            guard let sself = self, sself.isOpen, let delegate = sself.delegate else { return }
-            if sself.rsource.data > 0 {
-                delegate.dispatchSocketIsReadable(_socket: sself, count: Int(sself.rsource.data))
-            } else {
-                delegate.dispatchSocketDisconnected(_socket: sself)
-            }
-        }
+        self.rs = Source { DispatchSource.makeReadSource(fileDescriptor: socket.fd, queue: DispatchQueue.main) }
+        self.ws = Source { DispatchSource.makeWriteSource(fileDescriptor: socket.fd, queue: DispatchQueue.main) }
 
-        wsource.setEventHandler { [weak self] in
-            guard let sself = self, sself.isOpen, let delegate = sself.delegate else { return }
-            delegate.dispatchSocketIsWritable(_socket: sself)
-        }
+        rs.eventHandler = { [weak self] in self?.onReadable?(Int(self?.rs.source?.data ?? 0)) }
+        ws.eventHandler = { [weak self] in self?.onWritable?() }
     }
 
-    public func close() {
+    public func close() throws {
         guard isOpen else { return }
-
-        //Sigh. Ensure sources are kept alive until cancellation handler has been called.
-        var rs: DispatchSourceRead? = rsource
-        var ws: DispatchSourceWrite? = wsource
-        rsource.setCancelHandler { _ = rs?.handle; rs = nil }   //Access a property to shut the bloody compiler up,
-        wsource.setCancelHandler { _ = ws?.handle; ws = nil }   //and to ensure the var isn't optimised away.
-        rsource.setEventHandler(handler: nil)
-        wsource.setEventHandler(handler: nil)
-        self.notifyReadable = true
-        self.notifyWritable = true
-        rsource.cancel()
-        wsource.cancel()
-
-        try? socket.close()
-
         isOpen = false
+        onReadable = nil
+        onWritable = nil
+        writeQueue = []
+        rs.cancel()
+        ws.cancel()
+        try socket.close()
     }
 
     deinit {
-        close()
+        try? close()
+    }
+
+
+
+    public func read(_ count: Int, completion: @escaping (Data)->()) {
+        read(min: count, max: count, completion: completion)
+    }
+
+    public func read(max: Int, completion: @escaping (Data)->()) {
+        read(min: 1, max: max, completion: completion)
+    }
+
+    public func read(min: Int, max: Int, completion: @escaping (Data)->()) {
+        guard isOpen else { return }
+        precondition(self.onReadable == nil)
+        var result: Data = Data(capacity: max)
+
+        self.onReadable = { [weak self] available in
+            guard let sself = self else { return }
+            guard available > 0 else { return }
+
+            do {
+                let data = try sself.socket.recv(length: max-result.count, options: .dontWait)
+                if data.count > 0 {
+                    result.append(data)
+                    if result.count >= min {
+                        sself.onReadable = nil
+                        completion(result)
+                    }
+                }
+            } catch POSIXError(EAGAIN) {
+            } catch POSIXError(EWOULDBLOCK) {
+            } catch {
+                try? sself.close()
+            }
+        }
+    }
+
+
+    private var writeQueue: [Data] = []
+
+    public func write(_ data: Data) {
+        guard isOpen else { return }
+        writeQueue.append(data)
+
+        self.onWritable = { [weak self] in
+            guard let sself = self else { return }
+            do {
+                while let packet = sself.writeQueue.first {
+                    let written = try sself.socket.send(buffer: packet, options: .dontWait)
+                    if written == packet.count || sself.type == .datagram {
+                        //Datagrams are truncated to whatever gets accepted by a single send()
+                        _ = sself.writeQueue.removeFirst()
+                    } else {
+                        //For streams, we try and send the entire packet, even if it takes multiple calls
+                        sself.writeQueue[0] = packet.subdata(in: written ..< packet.count)
+                        break
+                    }
+                }
+            } catch POSIXError(EAGAIN) {
+            } catch POSIXError(EWOULDBLOCK) {
+            } catch {
+                try? self?.close()
+            }
+        }
     }
 }

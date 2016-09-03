@@ -419,7 +419,7 @@ public struct Socket6 : Hashable, RawRepresentable, CustomDebugStringConvertible
         - `EOPNOTSUPP`: One of the specified flags is inappropriate for the socket type.
         - `EPIPE`: The local end has been shut down on a connection oriented socket.
     */
-    public func send(buffer: UnsafeRawPointer, length: Int, options: SendOptions = [], to address: sockaddr_in6? = nil) throws -> Int {
+    @discardableResult public func send(buffer: UnsafeRawPointer, length: Int, options: SendOptions = [], to address: sockaddr_in6? = nil) throws -> Int {
         let result: Int
         if let address = address {
             result = address.withSockaddr { sock_sendto(fd, buffer, length, options.rawValue, $0, $1) }
@@ -467,7 +467,7 @@ public struct Socket6 : Hashable, RawRepresentable, CustomDebugStringConvertible
         - `EOPNOTSUPP`: One of the specified flags is inappropriate for the socket type.
         - `EPIPE`: The local end has been shut down on a connection oriented socket.
     */
-    public func send(buffer: Data, options: SendOptions = [], to address: sockaddr_in6? = nil) throws -> Int {
+    @discardableResult public func send(buffer: Data, options: SendOptions = [], to address: sockaddr_in6? = nil) throws -> Int {
         return try buffer.withUnsafeBytes { try send(buffer: $0, length: buffer.count, options: options, to: address) }
     }
 
