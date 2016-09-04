@@ -114,12 +114,12 @@ public class DispatchSocket : Hashable, CustomDebugStringConvertible {
 
     public func read(min: Int, max: Int, completion: @escaping (Data)->()) {
         guard isOpen else { return }
-        precondition(self.onReadable == nil)
+        guard self.onReadable == nil else { return /* FIXME: Complain */ }
         var result: Data = Data(capacity: max)
 
         self.onReadable = { [weak self] available in
             guard let sself = self else { return }
-            guard available > 0 else { return }
+            guard available > 0 else { return /* FIXME: Complain */ }
 
             do {
                 let data = try sself.socket.recv(length: max-result.count, options: .dontWait)

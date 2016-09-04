@@ -16,7 +16,7 @@ public struct ResultError<E> : Error {
 }
 
 
-///Minimal success/failure enum class.
+///Minimal success/failure enum.
 ///Mostly useful as an alternative to throw (eg. when returning results via completion-handler)
 public enum Result<V,E> {
 
