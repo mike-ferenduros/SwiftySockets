@@ -186,9 +186,10 @@ open class DispatchSocket : Hashable, CustomDebugStringConvertible {
                     } else {
                         //For streams, we try and send the entire packet, even if it takes multiple calls
                         sself.writeQueue[0] = packet.subdata(in: written ..< packet.count)
-                        break
+                        return
                     }
                 }
+                sself.onWritable = nil
             } catch POSIXError(EAGAIN) {
             } catch POSIXError(EWOULDBLOCK) {
             } catch {
