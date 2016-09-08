@@ -90,14 +90,7 @@ try listener.bind(to: sockaddr_in6.any(port: 1234))
 try listener.listen()
 
 print("Listening on \(listener)")
-
-DispatchQueue.global().async {
-	while true {
-		if let socket = try? listener.accept() {
-			handleConnection(socket: socket)
-		}
-	}
+while let socket = try? listener.accept() {
+	handleConnection(socket: socket)
 }
-
-dispatchMain()
 ```
