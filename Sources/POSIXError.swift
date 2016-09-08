@@ -48,7 +48,7 @@ public enum Result<R,E> {
 
 
 
-public struct POSIXError : LocalizedError, Equatable, CustomDebugStringConvertible {
+public struct POSIXError : LocalizedError, Hashable, CustomDebugStringConvertible {
 
     public let code: Int32
 
@@ -63,6 +63,8 @@ public struct POSIXError : LocalizedError, Equatable, CustomDebugStringConvertib
     public init(_ code: Int32) {
         self.code = code
     }
+
+    public var hashValue: Int { return code.hashValue }
 
     public static func ==(lhs: POSIXError, rhs: POSIXError) -> Bool {
         return lhs.code == rhs.code
