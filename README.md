@@ -12,3 +12,43 @@ DispatchSocket also has some extension functions to listen for new connections.
 Note that this is a pure socket-API based library, and to quote the iOS docs "In iOS, POSIX networking is discouraged because it does not activate the cellular radio or on-demand VPN."
 
 SSL is not yet implemented, but coming soon, probably with separate implementations for Darwin (SecureTransport) and Linux (OpenSSL?).
+
+## Simple TCP echo-server example:
+```
+import Dispatch
+import SwiftySockets
+
+
+var connections = Set<DispatchSocket>()
+
+//Catch connections on port 1234, suppressing 'port already in use' errors
+let listener = try DispatchSocket.listen(port: 1234, options: .reuseAddress) { socket in
+
+	let dsock = DispatchSocket(socket: socket)
+
+	print("Connected \(dsock)")
+
+	dsock.onReadable = { available in
+		//Readable but 0 bytes available means the TCP connection was closed at the other end
+		guard available > 0 else {
+			print("Disconnecting \(dsock)")
+			try? dsock.close()
+			connections.remove(dsock)
+			return
+		}
+
+		//Receive all available data
+		if let data = try? dsock.socket.recv() {
+			print("Echoing \(data.count) bytes from \(dsock.socket.peername)")
+			//DispatchSocket will queue the Data and send it in an onWritable handler.
+			dsock.write(data)
+		}
+	}
+
+	connections.insert(dsock)
+}
+
+print("Listening on \(listener.socket.sockname!.port)")
+
+dispatchMain()
+```
