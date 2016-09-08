@@ -13,7 +13,7 @@ Note that this is a pure socket-API based library, and to quote the iOS docs "In
 
 SSL is not yet implemented, but coming soon, probably with separate implementations for Darwin (SecureTransport) and Linux (OpenSSL?).
 
-## Simple TCP echo-server example:
+## Simple TCP echo-server example using DispatchSocket:
 ```
 import Dispatch
 import SwiftySockets
@@ -49,6 +49,55 @@ let listener = try DispatchSocket.listen(port: 1234, options: .reuseAddress) { s
 }
 
 print("Listening on \(listener.socket.sockname!.port)")
+
+dispatchMain()
+```
+## Or just plain sockets + GCD
+```
+import Dispatch
+import SwiftySockets
+
+
+func handleConnection(socket: Socket6) {
+
+	print("Connected \(socket)")
+
+	DispatchQueue.global().async {
+
+		while true {
+			//Block until there's something to receive
+			_ = try? socket.recv(length: 1, options: .peek)
+
+			//Receive all buffered data
+			guard let data = try? socket.recv(), data.count > 0 else {
+				print("Disconnecting \(socket)")
+				try? socket.close()
+				return
+			}
+
+			print("Echoing \(data.count) bytes")
+			_ = try? socket.send(buffer: data)
+		}
+	}
+}
+
+
+
+var listener = try Socket6(type: .stream)
+listener.reuseAddress = true
+listener.ip6Only = false
+try listener.bind(to: sockaddr_in6.any(port: 1234))
+try listener.listen()
+
+print("Listening on \(listener)")
+
+DispatchQueue.global().async {
+	while true {
+		if let socket = try? listener.accept() {
+			handleConnection(socket: socket)
+		}
+	}
+}
 
 dispatchMain()
 ```
