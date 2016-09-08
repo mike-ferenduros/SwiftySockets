@@ -63,16 +63,16 @@ extension DispatchSocket {
                 do {
                     try sock.connect(to: address)
                     DispatchQueue.main.async {
-                        completion(.success(sock))
+                        completion(.result(sock))
                     }
                 } catch let err {
                     DispatchQueue.main.async {
                         try? sock.close()
-                        completion(.failure(err))
+                        completion(.error(err))
                     }
                 }
             }
-        }  catch let err { completion(.failure(err)) }
+        }  catch let err { completion(.error(err)) }
     }
 
 
@@ -85,14 +85,14 @@ extension DispatchSocket {
             connect(to: addresses[i]) { result in
                 guard pending > 0 else { return }
                 switch result {
-                    case .success(let socket):
-                        completion(.success(socket))
+                    case .result(let socket):
+                        completion(.result(socket))
                         pending = 0
-                    case .failure(let error):
+                    case .error(let error):
                         errors[i] = error
                         pending -= 1
                         if pending == 0 {
-                            completion(.failure(errors.flatMap { $0 }))
+                            completion(.error(errors.flatMap { $0 }))
                         }
                 }
             }

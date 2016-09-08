@@ -295,9 +295,9 @@ extension sockaddr_in6 {
         DispatchQueue.global().async {
             do {
                 let results = try getaddrinfo(hostname: hostname, port: port)
-                DispatchQueue.main.async { completion(.success(results)) }
+                DispatchQueue.main.async { completion(.result(results)) }
             } catch let e {
-                DispatchQueue.main.async { completion(.failure(e)) }
+                DispatchQueue.main.async { completion(.error(e)) }
             }
         }
     }

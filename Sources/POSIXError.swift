@@ -18,29 +18,30 @@ public struct ResultError<E> : Error {
 
 ///Minimal success/failure enum.
 ///Mostly useful as an alternative to throw (eg. when returning results via completion-handler)
-public enum Result<V,E> {
+public enum Result<R,E> {
 
-    case success(V), failure(E)
+    case result(R), error(E)
 
-    ///Returns `value`, else throws `error`. If `error` doesn't conform to `Error`, it's wrapped in `ResultError` before being thrown.
-    public func unwrap() throws -> V {
+    /// - Returns `result`
+    /// - Throws `error` in case of `.error`
+    public func unwrap() throws -> R {
         switch self {
-            case .success(let value): return value
-            case .failure(let error): throw (error as? Error) ?? ResultError(error)
+            case .result(let r): return r
+            case .error(let e): throw (e as? Error) ?? ResultError(e)
         }
     }
 
-    public var value: V? {
+    public var result: R? {
         switch self {
-            case .success(let value): return value
-            case .failure: return nil
+            case .result(let r): return r
+            case .error: return nil
         }
     }
 
     public var error: E? {
         switch self {
-            case .success: return nil
-            case .failure(let error): return error
+            case .result: return nil
+            case .error(let e): return e
         }
     }
 }

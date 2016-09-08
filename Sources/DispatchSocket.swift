@@ -73,7 +73,10 @@ public class DispatchSocket : Hashable, CustomDebugStringConvertible {
 
     private let rs, ws: Source
 
+    ///Invoked repeatedly on DispatchQueue.main so long as `socket` has bytes available to read
     public var onReadable: ((Int)->())? { didSet { self.rs.running = isOpen && (onReadable != nil) } }
+
+    ///Invoked repeatedly on DispatchQueue.main so long as `socket` may be written to without blocking
     public var onWritable: (()->())?    { didSet { self.ws.running = isOpen && (onWritable != nil) } }
 
     public init(socket: Socket6) {
@@ -103,16 +106,36 @@ public class DispatchSocket : Hashable, CustomDebugStringConvertible {
     }
 
 
-
+    /**
+    Read exactly `count` bytes.
+    Implemented using the onReadable callback, hence must not be mixed with code that sets onReadable.
+    - Parameter count: Number of bytes to read
+    - Parameter completion: Completion-handler, invoked on DispatchQueue.main on success
+    */
     public func read(_ count: Int, completion: @escaping (Data)->()) {
         read(min: count, max: count, completion: completion)
     }
 
+    /**
+    Read up to `max` bytes
+    Implemented using the onReadable callback, hence must not be mixed with code that sets onReadable, nor called while another read is pending.
+    - Parameter max: Maximum number of bytes to read
+    - Parameter completion: Completion-handler, invoked on DispatchQueue.main on success
+    */
     public func read(max: Int, completion: @escaping (Data)->()) {
         read(min: 1, max: max, completion: completion)
     }
 
+    /**
+    Read at least `min` bytes, up to `max` bytes
+    Implemented using the onReadable callback, hence must not be mixed with code that sets onReadable. 
+    - Parameter min: Minimum number of bytes to read
+    - Parameter min: Maximum number of bytes to read
+    - Parameter completion: Completion-handler, invoked on DispatchQueue.main on success
+    */
     public func read(min: Int, max: Int, completion: @escaping (Data)->()) {
+        precondition(min <= max)
+        precondition(min > 0)
         guard isOpen else { return }
         guard self.onReadable == nil else { return /* FIXME: Complain */ }
         var result: Data = Data(capacity: max)
@@ -141,6 +164,13 @@ public class DispatchSocket : Hashable, CustomDebugStringConvertible {
 
     private var writeQueue: [Data] = []
 
+    /**
+    Asynchronously write data to the connected socket.
+    For stream-type sockets, the entire contents of `data` is always written
+    For datagram-type sockets, only a single datagram is sent, hence the data may be truncated.
+    Implemented using the onWritable callback, hence must not be mixed with code that sets onWritable.
+     - Parameter data: Data to be written.
+    */
     public func write(_ data: Data) {
         guard isOpen else { return }
         writeQueue.append(data)
