@@ -18,7 +18,7 @@ import Dispatch
      - Performs async reads (one at a time)
      - Performs queued, async writes
 */
-public class DispatchSocket : Hashable, CustomDebugStringConvertible {
+open class DispatchSocket : Hashable, CustomDebugStringConvertible {
 
     //Dedupe some read/write code, hide a crash-bug
     private class Source {
