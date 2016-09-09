@@ -208,7 +208,7 @@ open class DispatchSocket : Hashable, CustomDebugStringConvertible {
         }
 
         #if os(Linux)
-        self.onWritable()
+        self.onWritable?()
         #endif
     }
 }
