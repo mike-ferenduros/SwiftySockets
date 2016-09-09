@@ -271,9 +271,9 @@ extension sockaddr_in6 {
         let port = "\(port)".cString(using: .utf8)
         var addresses: UnsafeMutablePointer<addrinfo>?
         #if os(Linux)
-        var hint = addrinfo(ai_flags: 0, ai_family: Int32(AF_INET6), ai_socktype: 0, ai_protocol: 0, ai_addrlen: 0, ai_addr: nil, ai_canonname: nil, ai_next: nil)
+        var hint = addrinfo(ai_flags: Int32(AI_V4MAPPED | AI_ALL), ai_family: Int32(AF_INET6), ai_socktype: 0, ai_protocol: 0, ai_addrlen: 0, ai_addr: nil, ai_canonname: nil, ai_next: nil)
         #else
-        var hint = addrinfo(ai_flags: 0, ai_family: Int32(AF_INET6), ai_socktype: 0, ai_protocol: 0, ai_addrlen: 0, ai_canonname: nil, ai_addr: nil, ai_next: nil)
+        var hint = addrinfo(ai_flags: Int32(AI_V4MAPPED | AI_ALL), ai_family: Int32(AF_INET6), ai_socktype: 0, ai_protocol: 0, ai_addrlen: 0, ai_canonname: nil, ai_addr: nil, ai_next: nil)
         #endif
         var results: [sockaddr_in6] = []
 
