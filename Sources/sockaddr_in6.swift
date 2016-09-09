@@ -90,6 +90,9 @@ extension in6_addr : Hashable, CustomStringConvertible {
             }
         }
     }
+
+    ///Indicates if this is an IPv4-mapped address
+    public var isV4: Bool { return self.bytes[0..<12] == [0,0,0,0,0,0,0,0,0,0,0xFF,0xFF] }
 }
 
 
@@ -121,6 +124,9 @@ extension sockaddr_in6 : Hashable, CustomDebugStringConvertible {
         get { return sin6_scope_id.bigEndian }
         set { sin6_scope_id = newValue.bigEndian }
     }
+
+    ///Indicates if this is an IPv4-mapped address
+    public var isV4: Bool { return sin6_addr.isV4 }
 
     ///Wildcard address, optionally with port
     public static func any(port: UInt16 = 0) -> sockaddr_in6 {
@@ -232,11 +238,11 @@ extension sockaddr_in6 : Hashable, CustomDebugStringConvertible {
 
         Useful for passing self to socket functions that require an input sockaddr pointer
     */
-    public func withSockaddr<T>(_ block: (UnsafePointer<sockaddr>,socklen_t)->T) -> T {
+    public func withSockaddr<T>(_ block: (UnsafePointer<sockaddr>,socklen_t) throws -> T) rethrows -> T {
         var mself = self
-        return withUnsafePointer(to: &mself) { sa6 in
-            sa6.withMemoryRebound(to: sockaddr.self, capacity: 1) { sa in
-                block(sa, socklen_t(MemoryLayout<sockaddr_in6>.size))
+        return try withUnsafePointer(to: &mself) { sa6 in
+            try sa6.withMemoryRebound(to: sockaddr.self, capacity: 1) { sa in
+                try block(sa, socklen_t(MemoryLayout<sockaddr_in6>.size))
             }
         }
     }
@@ -248,11 +254,11 @@ extension sockaddr_in6 : Hashable, CustomDebugStringConvertible {
 
         On block-completion, modified length parameter is ignored
     */
-    public mutating func withMutableSockaddr<T>(_ block: (UnsafeMutablePointer<sockaddr>,UnsafeMutablePointer<socklen_t>)->T) -> T {
+    public mutating func withMutableSockaddr<T>(_ block: (UnsafeMutablePointer<sockaddr>,UnsafeMutablePointer<socklen_t>) throws ->T) rethrows -> T {
         var maxLen = socklen_t(MemoryLayout<sockaddr_in6>.size)
-        return withUnsafeMutablePointer(to: &self) { sa6 in
-            sa6.withMemoryRebound(to: sockaddr.self, capacity: 1) { sa in
-                block(sa, &maxLen)
+        return try withUnsafeMutablePointer(to: &self) { sa6 in
+            try sa6.withMemoryRebound(to: sockaddr.self, capacity: 1) { sa in
+                try block(sa, &maxLen)
             }
         }
     }
