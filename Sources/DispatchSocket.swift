@@ -184,17 +184,31 @@ open class DispatchSocket : Hashable, CustomDebugStringConvertible {
                         //Datagrams are truncated to whatever gets accepted by a single send()
                         _ = sself.writeQueue.removeFirst()
                     } else {
-                        //For streams, we try and send the entire packet, even if it takes multiple calls
-                        sself.writeQueue[0] = packet.subdata(in: written ..< packet.count)
-                        return
+                        if written > 0 {
+                            //For streams, we try and send the entire packet, even if it takes multiple calls
+                            sself.writeQueue[0] = packet.subdata(in: written ..< packet.count)
+                        }
+                        break
                     }
                 }
-                sself.onWritable = nil
             } catch POSIXError(EAGAIN) {
             } catch POSIXError(EWOULDBLOCK) {
             } catch {
-                try? self?.close()
+                try? sself.close()
+                return
+            }
+
+            if sself.writeQueue.count == 0 {
+                sself.onWritable = nil
+            } else {
+                #if os(Linux)
+                DispatchQueue.main.asyncAfter(wallDeadline: DispatchWallTime.now() + 0.01) { [weak self] in self?.onWritable?() }
+                #endif
             }
         }
+
+        #if os(Linux)
+        self.onWritable()
+        #endif
     }
 }
