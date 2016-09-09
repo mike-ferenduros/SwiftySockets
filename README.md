@@ -39,7 +39,7 @@ let listener = try DispatchSocket.listen(port: 1234, options: .reuseAddress) { s
 
 		//Receive all available data
 		if let data = try? dsock.socket.recv() {
-			print("Echoing \(data.count) bytes from \(dsock.socket.peername)")
+			print("Echoing \(data.count) bytes on \(dsock)")
 			//DispatchSocket will queue the Data and send it in an onWritable handler.
 			dsock.write(data)
 		}
@@ -48,7 +48,7 @@ let listener = try DispatchSocket.listen(port: 1234, options: .reuseAddress) { s
 	connections.insert(dsock)
 }
 
-print("Listening on \(listener.socket.sockname!.port)")
+print("Listening on \(listener)")
 
 dispatchMain()
 ```
@@ -75,7 +75,7 @@ func handleConnection(socket: Socket6) {
 				return
 			}
 
-			print("Echoing \(data.count) bytes")
+			print("Echoing \(data.count) bytes on \(socket)")
 			_ = try? socket.send(buffer: data)
 		}
 	}
@@ -90,14 +90,7 @@ try listener.bind(to: sockaddr_in6.any(port: 1234))
 try listener.listen()
 
 print("Listening on \(listener)")
-
-DispatchQueue.global().async {
-	while true {
-		if let socket = try? listener.accept() {
-			handleConnection(socket: socket)
-		}
-	}
+while let socket = try? listener.accept() {
+	handleConnection(socket: socket)
 }
-
-dispatchMain()
 ```
