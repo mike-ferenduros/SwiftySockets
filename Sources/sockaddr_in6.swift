@@ -281,7 +281,7 @@ extension sockaddr_in6 {
 
         var curr = addresses
         while let info = curr?.pointee {
-            if let sa = sockaddr_in6(ai: info) {
+            if let sa = sockaddr_in6(ai: info), !results.contains(sa) {
                 results.append(sa)
             }
             curr = info.ai_next
