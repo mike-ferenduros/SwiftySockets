@@ -62,7 +62,7 @@ open class BufferedSocket : DispatchSocket, DispatchSocketReadableDelegate, Disp
     }
     private var readQueue: [ReadItem] = []
 
-    public func dispatchSocketReadable(_ socket: DispatchSocket, count: Int) {
+    open func dispatchSocketReadable(_ socket: DispatchSocket, count: Int) {
 
         guard count > 0 else { try? close(); return }
 
@@ -119,7 +119,7 @@ open class BufferedSocket : DispatchSocket, DispatchSocketReadableDelegate, Disp
         writableDelegate = self
     }
 
-    public func dispatchSocketWritable(_ socket: DispatchSocket) {
+    open func dispatchSocketWritable(_ socket: DispatchSocket) {
         do {
             while let packet = writeQueue.first {
                 let written = try self.socket.send(buffer: packet, options: .dontWait)
