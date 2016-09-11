@@ -102,8 +102,8 @@ open class DispatchSocket : Hashable, CustomDebugStringConvertible {
         rs.eventHandler = { [weak self] in self?.readableDelegate?.dispatchSocketReadable(self!, count: Int(self!.rs.source?.data ?? 0)) }
         ws.eventHandler = { [weak self] in self?.writableDelegate?.dispatchSocketWritable(self!) }
     }
-
-     open func close() throws {
+    
+    private func doClose() throws {
         guard isOpen else { return }
         isOpen = false
         self.readableDelegate = nil
@@ -113,7 +113,12 @@ open class DispatchSocket : Hashable, CustomDebugStringConvertible {
         try socket.close()
     }
 
+    open func close() throws {
+        try doClose()
+    }
+
     deinit {
         try? close()
+        try? doClose()
     }
 }
