@@ -14,3 +14,18 @@ BufferedSocket subclasses DispatchSocket to provide easy asynchronous reading an
 Note that this is a pure socket-API based library, and to quote the iOS docs "In iOS, POSIX networking is discouraged because it does not activate the cellular radio or on-demand VPN."
 
 SSL is not yet implemented, but coming soon, probably with separate implementations for Darwin (SecureTransport) and Linux (OpenSSL?).
+
+## Cocoapods
+    pod 'SwiftySockets', :git => 'https://github.com/mike-ferenduros/SwiftySockets.git'
+
+## Carthage
+    github "mike-ferenduros/SwiftySockets"
+
+## Swift Package Manager
+    let package = Package(
+    	name: "whatever",
+    	targets: [],
+    	dependencies: [
+    		.Package(url: "https://github.com/mike-ferenduros/SwiftySockets", majorVersion: 0)
+    	]
+    )
