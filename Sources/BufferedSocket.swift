@@ -100,11 +100,21 @@ open class BufferedSocket : DispatchSocket, DispatchSocketReadableDelegate, Disp
     Asynchronously write data to the connected socket.
     For stream-type sockets, the entire contents of `data` is always written
     For datagram-type sockets, only a single datagram is sent, hence the data may be truncated.
-    Implemented using the onWritable callback, hence must not be mixed with code that sets onWritable.
      - Parameter data: Data to be written.
     */
     public func write(_ data: Data) {
         guard isOpen else { return }
+        var data = data
+
+        //Try and shortcut the whole dispatch-source stuff if possible.
+        if writeQueue.count == 0, let written = try? self.socket.send(buffer: data, options: .dontWait), written > 0 {
+            if written == data.count || self.type == .datagram {
+                return
+            } else {
+                data = data.subdata(in: written ..< data.count)
+            }
+        }
+
         writeQueue.append(data)
         writableDelegate = self
     }
