@@ -731,7 +731,7 @@ public struct Socket6 : Hashable, RawRepresentable, CustomDebugStringConvertible
 
 extension Socket6 {
 
-    public static func connect(to address: sockaddr_in6, completion: @escaping (Result<Socket6,Error>)->()) {
+    public static func connect(to address: sockaddr_in6, completion: @escaping (Result<Socket6,POSIXError>)->()) {
         do {
             let sock = try Socket6(type: .stream)
 
@@ -744,17 +744,17 @@ extension Socket6 {
                 } catch let err {
                     DispatchQueue.main.async {
                         try? sock.close()
-                        completion(.error(err))
+                        completion(.error(err as! POSIXError))
                     }
                 }
             }
-        }  catch let err { completion(.error(err)) }
+        }  catch let err { completion(.error(err as! POSIXError)) }
     }
 
 
     ///Connect to all passed addresses in parallel, calling completion-handler with the first successful connection, or with all returned errors
-    public static func connect(to addresses: [sockaddr_in6], completion: @escaping (Result<Socket6,[Error]>)->()) {
-        var errors = [Error?](repeating: nil, count: addresses.count)
+    public static func connect(to addresses: [sockaddr_in6], completion: @escaping (Result<Socket6,[POSIXError]>)->()) {
+        var errors = [POSIXError?](repeating: nil, count: addresses.count)
         var pending = addresses.count
         for i in 0 ..< addresses.count {
 
@@ -771,6 +771,19 @@ extension Socket6 {
                             completion(.error(errors.flatMap { $0 }))
                         }
                 }
+            }
+        }
+    }
+
+    ///Find all addresses for a hostname and connect to them all in parallel, calling completion-handler with the first successful connection, or with all returned errors
+    public static func connect(to hostname: String, port: UInt16, completion: @escaping (Result<Socket6,[POSIXError]>)->()) {
+        sockaddr_in6.getaddrinfo(hostname: hostname, port: port) { result in
+            switch result {
+                case .result(let addresses):
+                    connect(to: addresses, completion: completion)
+
+                case .error(let error):
+                    completion(.error([error]))
             }
         }
     }

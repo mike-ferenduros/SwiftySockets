@@ -270,7 +270,18 @@ private let sock_getaddrinfo = getaddrinfo
 extension sockaddr_in6 {
 
     /**
-        Invoke getaddrinfo to lookup IP addresses for a hostname. Returns both native IPv6 and IPv4-mapped addresses.
+    Invoke getaddrinfo to lookup IP addresses for a hostname.
+    - Parameter hostname: Hostname to look up
+    - Parameter port: Port number for service to look up
+    - Returns: All found IPV6 and IPV4-mapped addresses
+    - Throws: POSIXError
+        - `EAI_ADDRFAMILY`: The specified network host does not have any IPV4 or IPV6 network addresses
+        - `EAI_AGAIN`: The name server returned a temporary failure indication.  Try again later.
+        - `EAI_FAIL`: The name server returned a permanent failure indication.
+        - `EAI_MEMORY`: Out of memory.
+        - `EAI_NODATA`: The specified network host exists, but does not have any network addresses defined.
+        - `EAI_NONAME`: The node or service is not known
+        - `EAI_SYSTEM`: Other system error, check errno for details.    
     */
     public static func getaddrinfo(hostname: String, port: UInt16) throws -> [sockaddr_in6] {
         let cstr = hostname.cString(using: .utf8)
@@ -297,13 +308,27 @@ extension sockaddr_in6 {
         return results
     }
 
-    public static func getaddrinfo(hostname: String, port: UInt16, completion: @escaping (Result<[sockaddr_in6], Error>)->()) {
+    /**
+    Invoke getaddrinfo to lookup IP addresses for a hostname.
+    - Parameter hostname: Hostname to look up
+    - Parameter port: Port number for service to look up
+    - Parameter completion: Handler, which is passed a Result containing one of
+        - [sockaddr_in6]: All found IPV6 and IPV4-mapped addresses
+        - `EAI_ADDRFAMILY`: The specified network host does not have any IPV4 or IPV6 network addresses
+        - `EAI_AGAIN`: The name server returned a temporary failure indication.  Try again later.
+        - `EAI_FAIL`: The name server returned a permanent failure indication.
+        - `EAI_MEMORY`: Out of memory.
+        - `EAI_NODATA`: The specified network host exists, but does not have any network addresses defined.
+        - `EAI_NONAME`: The node or service is not known
+        - `EAI_SYSTEM`: Other system error, check errno for details.    
+    */
+    public static func getaddrinfo(hostname: String, port: UInt16, completion: @escaping (Result<[sockaddr_in6], POSIXError>)->()) {
         DispatchQueue.global().async {
             do {
                 let results = try getaddrinfo(hostname: hostname, port: port)
                 DispatchQueue.main.async { completion(.result(results)) }
             } catch let e {
-                DispatchQueue.main.async { completion(.error(e)) }
+                DispatchQueue.main.async { completion(.error(e as! POSIXError)) }
             }
         }
     }
