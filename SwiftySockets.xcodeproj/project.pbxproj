@@ -48,6 +48,8 @@
 		7750FE2C1D7B8366003ABCF9 /* ListenSocket.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ListenSocket.swift; sourceTree = "<group>"; };
 		777563DB1D6F792C001581B7 /* Socket6+properties.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Socket6+properties.swift"; sourceTree = "<group>"; };
 		7794D43B1D859AF300B7C246 /* BufferedSocket.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BufferedSocket.swift; sourceTree = "<group>"; };
+		7794D4421D8619AF00B7C246 /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Package.swift; sourceTree = SOURCE_ROOT; };
+		7794D4431D8619B700B7C246 /* SwiftySockets.podspec */ = {isa = PBXFileReference; lastKnownFileType = text; path = SwiftySockets.podspec; sourceTree = SOURCE_ROOT; };
 		77ACDFB41D540E05000349B1 /* Info_iOS.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info_iOS.plist; sourceTree = "<group>"; };
 		77ACDFB51D540E05000349B1 /* Info_macOS.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info_macOS.plist; sourceTree = "<group>"; };
 		77ACDFB61D540E05000349B1 /* Info_tvOS.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info_tvOS.plist; sourceTree = "<group>"; };
@@ -126,6 +128,8 @@
 		77ACDFB31D540E05000349B1 /* Metadata */ = {
 			isa = PBXGroup;
 			children = (
+				7794D4421D8619AF00B7C246 /* Package.swift */,
+				7794D4431D8619B700B7C246 /* SwiftySockets.podspec */,
 				77ACDFB41D540E05000349B1 /* Info_iOS.plist */,
 				77ACDFB51D540E05000349B1 /* Info_macOS.plist */,
 				77ACDFB61D540E05000349B1 /* Info_tvOS.plist */,
