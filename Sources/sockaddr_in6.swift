@@ -270,7 +270,7 @@ private let sock_getaddrinfo = getaddrinfo
 extension sockaddr_in6 {
 
     /**
-        Invoke getaddrinfo to lookup IPv6 addresses for a hostname.
+        Invoke getaddrinfo to lookup IP addresses for a hostname. Returns both native IPv6 and IPv4-mapped addresses.
     */
     public static func getaddrinfo(hostname: String, port: UInt16) throws -> [sockaddr_in6] {
         let cstr = hostname.cString(using: .utf8)

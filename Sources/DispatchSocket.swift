@@ -10,13 +10,19 @@ import Foundation
 import Dispatch
 
 
+public protocol DispatchSocketReadableDelegate : class {
+    func dispatchSocketReadable(_ socket: DispatchSocket, count: Int)
+}
+
+public protocol DispatchSocketWritableDelegate : class {
+    func dispatchSocketWritable(_ socket: DispatchSocket)
+}
+
 
 /**
     Socket6 wrapper that
      - Closes the socket on deinit
-     - Invokes callbacks on readable / writable events
-     - Performs async reads (one at a time)
-     - Performs queued, async writes
+     - Invokes delegate methods on readable / writable events
 */
 open class DispatchSocket : Hashable, CustomDebugStringConvertible {
 
@@ -73,29 +79,35 @@ open class DispatchSocket : Hashable, CustomDebugStringConvertible {
 
     private let rs, ws: Source
 
-    ///Invoked repeatedly on DispatchQueue.main so long as `socket` has bytes available to read
-    public var onReadable: ((Int)->())? { didSet { self.rs.running = isOpen && (onReadable != nil) } }
-
-    ///Invoked repeatedly on DispatchQueue.main so long as `socket` may be written to without blocking
-    public var onWritable: (()->())?    { didSet { self.ws.running = isOpen && (onWritable != nil) } }
+    public weak var readableDelegate : DispatchSocketReadableDelegate? { didSet { rs.running = isOpen && (readableDelegate != nil) } }
+    public weak var writableDelegate : DispatchSocketWritableDelegate? { didSet { ws.running = isOpen && (writableDelegate != nil) } }
 
     public init(socket: Socket6) {
         self.socket = socket
         self.type = socket.type
 
         self.rs = Source { DispatchSource.makeReadSource(fileDescriptor: socket.fd, queue: DispatchQueue.main) }
-        self.ws = Source { DispatchSource.makeWriteSource(fileDescriptor: socket.fd, queue: DispatchQueue.main) }
 
-        rs.eventHandler = { [weak self] in self?.onReadable?(Int(self?.rs.source?.data ?? 0)) }
-        ws.eventHandler = { [weak self] in self?.onWritable?() }
+        #if os(Linux)
+        //This is suck. Linux doesn't support both readable and writable sources on the same fd, so we have to fake up one of them.
+        self.ws = Source {
+            let s = DispatchSource.makeTimerSource(flags: [], queue: DispatchQueue.main)
+            s.scheduleRepeating(deadline: DispatchTime.now(), interval: 0.01)
+            return s
+        }
+        #else
+        self.ws = Source { DispatchSource.makeWriteSource(fileDescriptor: socket.fd, queue: DispatchQueue.main) }
+        #endif
+
+        rs.eventHandler = { [weak self] in self?.readableDelegate?.dispatchSocketReadable(self!, count: Int(self!.rs.source?.data ?? 0)) }
+        ws.eventHandler = { [weak self] in self?.writableDelegate?.dispatchSocketWritable(self!) }
     }
 
-    public func close() throws {
+     open func close() throws {
         guard isOpen else { return }
         isOpen = false
-        onReadable = nil
-        onWritable = nil
-        writeQueue = []
+        self.readableDelegate = nil
+        self.writableDelegate = nil
         rs.cancel()
         ws.cancel()
         try socket.close()
@@ -103,112 +115,5 @@ open class DispatchSocket : Hashable, CustomDebugStringConvertible {
 
     deinit {
         try? close()
-    }
-
-
-    /**
-    Read exactly `count` bytes.
-    Implemented using the onReadable callback, hence must not be mixed with code that sets onReadable.
-    - Parameter count: Number of bytes to read
-    - Parameter completion: Completion-handler, invoked on DispatchQueue.main on success
-    */
-    public func read(_ count: Int, completion: @escaping (Data)->()) {
-        read(min: count, max: count, completion: completion)
-    }
-
-    /**
-    Read up to `max` bytes
-    Implemented using the onReadable callback, hence must not be mixed with code that sets onReadable, nor called while another read is pending.
-    - Parameter max: Maximum number of bytes to read
-    - Parameter completion: Completion-handler, invoked on DispatchQueue.main on success
-    */
-    public func read(max: Int, completion: @escaping (Data)->()) {
-        read(min: 1, max: max, completion: completion)
-    }
-
-    /**
-    Read at least `min` bytes, up to `max` bytes
-    Implemented using the onReadable callback, hence must not be mixed with code that sets onReadable. 
-    - Parameter min: Minimum number of bytes to read
-    - Parameter min: Maximum number of bytes to read
-    - Parameter completion: Completion-handler, invoked on DispatchQueue.main on success
-    */
-    public func read(min: Int, max: Int, completion: @escaping (Data)->()) {
-        precondition(min <= max)
-        precondition(min > 0)
-        guard isOpen else { return }
-        guard self.onReadable == nil else { return /* FIXME: Complain */ }
-        var result: Data = Data(capacity: max)
-
-        self.onReadable = { [weak self] available in
-            guard let sself = self else { return }
-            guard available > 0 else { return /* FIXME: Complain */ }
-
-            do {
-                let data = try sself.socket.recv(length: max-result.count, options: .dontWait)
-                if data.count > 0 {
-                    result.append(data)
-                    if result.count >= min {
-                        sself.onReadable = nil
-                        completion(result)
-                    }
-                }
-            } catch POSIXError(EAGAIN) {
-            } catch POSIXError(EWOULDBLOCK) {
-            } catch {
-                try? sself.close()
-            }
-        }
-    }
-
-
-    private var writeQueue: [Data] = []
-
-    /**
-    Asynchronously write data to the connected socket.
-    For stream-type sockets, the entire contents of `data` is always written
-    For datagram-type sockets, only a single datagram is sent, hence the data may be truncated.
-    Implemented using the onWritable callback, hence must not be mixed with code that sets onWritable.
-     - Parameter data: Data to be written.
-    */
-    public func write(_ data: Data) {
-        guard isOpen else { return }
-        writeQueue.append(data)
-
-        self.onWritable = { [weak self] in
-            guard let sself = self else { return }
-            do {
-                while let packet = sself.writeQueue.first {
-                    let written = try sself.socket.send(buffer: packet, options: .dontWait)
-                    if written == packet.count || sself.type == .datagram {
-                        //Datagrams are truncated to whatever gets accepted by a single send()
-                        _ = sself.writeQueue.removeFirst()
-                    } else {
-                        if written > 0 {
-                            //For streams, we try and send the entire packet, even if it takes multiple calls
-                            sself.writeQueue[0] = packet.subdata(in: written ..< packet.count)
-                        }
-                        break
-                    }
-                }
-            } catch POSIXError(EAGAIN) {
-            } catch POSIXError(EWOULDBLOCK) {
-            } catch {
-                try? sself.close()
-                return
-            }
-
-            if sself.writeQueue.count == 0 {
-                sself.onWritable = nil
-            } else {
-                #if os(Linux)
-                DispatchQueue.main.asyncAfter(wallDeadline: DispatchWallTime.now() + 0.01) { [weak self] in self?.onWritable?() }
-                #endif
-            }
-        }
-
-        #if os(Linux)
-        self.onWritable?()
-        #endif
     }
 }

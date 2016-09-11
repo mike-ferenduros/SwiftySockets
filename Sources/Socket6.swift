@@ -727,3 +727,51 @@ public struct Socket6 : Hashable, RawRepresentable, CustomDebugStringConvertible
         return try recvfrom(length: self.availableBytes, options: options)
     }
 }
+
+
+extension Socket6 {
+
+    public static func connect(to address: sockaddr_in6, completion: @escaping (Result<Socket6,Error>)->()) {
+        do {
+            let sock = try Socket6(type: .stream)
+
+            DispatchQueue.global().async {
+                do {
+                    try sock.connect(to: address)
+                    DispatchQueue.main.async {
+                        completion(.result(sock))
+                    }
+                } catch let err {
+                    DispatchQueue.main.async {
+                        try? sock.close()
+                        completion(.error(err))
+                    }
+                }
+            }
+        }  catch let err { completion(.error(err)) }
+    }
+
+
+    ///Connect to all passed addresses in parallel, calling completion-handler with the first successful connection, or with all returned errors
+    public static func connect(to addresses: [sockaddr_in6], completion: @escaping (Result<Socket6,[Error]>)->()) {
+        var errors = [Error?](repeating: nil, count: addresses.count)
+        var pending = addresses.count
+        for i in 0 ..< addresses.count {
+
+            connect(to: addresses[i]) { result in
+                guard pending > 0 else { return }
+                switch result {
+                    case .result(let socket):
+                        completion(.result(socket))
+                        pending = 0
+                    case .error(let error):
+                        errors[i] = error
+                        pending -= 1
+                        if pending == 0 {
+                            completion(.error(errors.flatMap { $0 }))
+                        }
+                }
+            }
+        }
+    }
+}
