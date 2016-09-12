@@ -19,7 +19,7 @@ SSL is not yet implemented, but coming soon, probably with separate implementati
   s.source           = { :git => 'https://github.com/mike-ferenduros/SwiftySockets.git', :tag => s.version.to_s }
   # s.social_media_url = 'https://twitter.com/<TWITTER_USERNAME>'
 
-  s.ios.deployment_target = '10.0'
+  s.ios.deployment_target = '8.0'
 
   s.source_files = 'Sources/*'
 
