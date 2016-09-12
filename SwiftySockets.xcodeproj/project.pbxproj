@@ -35,6 +35,14 @@
 		77ACDFF81D588A53000349B1 /* POSIXError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77ACDFF61D588A53000349B1 /* POSIXError.swift */; };
 		77ACDFF91D588A53000349B1 /* POSIXError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77ACDFF61D588A53000349B1 /* POSIXError.swift */; };
 		77ACDFFA1D588A53000349B1 /* POSIXError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77ACDFF61D588A53000349B1 /* POSIXError.swift */; };
+		77EB56221D86DA1F00C06787 /* SecureSocket.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77EB56211D86DA1F00C06787 /* SecureSocket.swift */; };
+		77EB56231D86DA1F00C06787 /* SecureSocket.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77EB56211D86DA1F00C06787 /* SecureSocket.swift */; };
+		77EB56241D86DA1F00C06787 /* SecureSocket.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77EB56211D86DA1F00C06787 /* SecureSocket.swift */; };
+		77EB56251D86DA1F00C06787 /* SecureSocket.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77EB56211D86DA1F00C06787 /* SecureSocket.swift */; };
+		77EB563D1D86DF5200C06787 /* SecureTransportSocket.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77EB563C1D86DF5200C06787 /* SecureTransportSocket.swift */; };
+		77EB563E1D86DF5200C06787 /* SecureTransportSocket.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77EB563C1D86DF5200C06787 /* SecureTransportSocket.swift */; };
+		77EB563F1D86DF5200C06787 /* SecureTransportSocket.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77EB563C1D86DF5200C06787 /* SecureTransportSocket.swift */; };
+		77EB56401D86DF5200C06787 /* SecureTransportSocket.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77EB563C1D86DF5200C06787 /* SecureTransportSocket.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -54,8 +62,9 @@
 		77ACDFB51D540E05000349B1 /* Info_macOS.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info_macOS.plist; sourceTree = "<group>"; };
 		77ACDFB61D540E05000349B1 /* Info_tvOS.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info_tvOS.plist; sourceTree = "<group>"; };
 		77ACDFB71D540E05000349B1 /* Info_watchOS.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info_watchOS.plist; sourceTree = "<group>"; };
-		77ACDFF51D5880D8000349B1 /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Package.swift; sourceTree = "<group>"; };
 		77ACDFF61D588A53000349B1 /* POSIXError.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = POSIXError.swift; sourceTree = "<group>"; };
+		77EB56211D86DA1F00C06787 /* SecureSocket.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SecureSocket.swift; sourceTree = "<group>"; };
+		77EB563C1D86DF5200C06787 /* SecureTransportSocket.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SecureTransportSocket.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -93,7 +102,6 @@
 		770A96521D53E0C200F35198 = {
 			isa = PBXGroup;
 			children = (
-				77ACDFF51D5880D8000349B1 /* Package.swift */,
 				770A965E1D53E0C200F35198 /* Sources */,
 				77ACDFB31D540E05000349B1 /* Metadata */,
 				770A965D1D53E0C200F35198 /* Products */,
@@ -121,6 +129,8 @@
 				7701F1F41D71135500CF8116 /* DispatchSocket.swift */,
 				7794D43B1D859AF300B7C246 /* BufferedSocket.swift */,
 				7750FE2C1D7B8366003ABCF9 /* ListenSocket.swift */,
+				77EB56211D86DA1F00C06787 /* SecureSocket.swift */,
+				77EB563C1D86DF5200C06787 /* SecureTransportSocket.swift */,
 			);
 			path = Sources;
 			sourceTree = "<group>";
@@ -333,8 +343,10 @@
 				770A96B71D53EE2A00F35198 /* Socket6.swift in Sources */,
 				7701F1F51D71135500CF8116 /* DispatchSocket.swift in Sources */,
 				777563DC1D6F792C001581B7 /* Socket6+properties.swift in Sources */,
+				77EB56221D86DA1F00C06787 /* SecureSocket.swift in Sources */,
 				7750FE2D1D7B8366003ABCF9 /* ListenSocket.swift in Sources */,
 				7794D43C1D859AF300B7C246 /* BufferedSocket.swift in Sources */,
+				77EB563D1D86DF5200C06787 /* SecureTransportSocket.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -347,8 +359,10 @@
 				770A96E21D53EEAF00F35198 /* Socket6.swift in Sources */,
 				7701F1F61D71135500CF8116 /* DispatchSocket.swift in Sources */,
 				777563DD1D6F792C001581B7 /* Socket6+properties.swift in Sources */,
+				77EB56231D86DA1F00C06787 /* SecureSocket.swift in Sources */,
 				7750FE2E1D7B8366003ABCF9 /* ListenSocket.swift in Sources */,
 				7794D43D1D859AF300B7C246 /* BufferedSocket.swift in Sources */,
+				77EB563E1D86DF5200C06787 /* SecureTransportSocket.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -361,8 +375,10 @@
 				770A96E61D53EEB000F35198 /* Socket6.swift in Sources */,
 				7701F1F81D71135500CF8116 /* DispatchSocket.swift in Sources */,
 				777563DF1D6F792C001581B7 /* Socket6+properties.swift in Sources */,
+				77EB56251D86DA1F00C06787 /* SecureSocket.swift in Sources */,
 				7750FE301D7B8366003ABCF9 /* ListenSocket.swift in Sources */,
 				7794D43F1D859AF300B7C246 /* BufferedSocket.swift in Sources */,
+				77EB56401D86DF5200C06787 /* SecureTransportSocket.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -375,8 +391,10 @@
 				770A96EA1D53EEB000F35198 /* Socket6.swift in Sources */,
 				7701F1F71D71135500CF8116 /* DispatchSocket.swift in Sources */,
 				777563DE1D6F792C001581B7 /* Socket6+properties.swift in Sources */,
+				77EB56241D86DA1F00C06787 /* SecureSocket.swift in Sources */,
 				7750FE2F1D7B8366003ABCF9 /* ListenSocket.swift in Sources */,
 				7794D43E1D859AF300B7C246 /* BufferedSocket.swift in Sources */,
+				77EB563F1D86DF5200C06787 /* SecureTransportSocket.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
