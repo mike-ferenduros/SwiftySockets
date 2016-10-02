@@ -20,8 +20,7 @@ public enum SecureSocketError : LocalizedError {
 }
 
 public protocol SecureSocketCertificate {
-    ///Initialize from PEM-encoded signing key and certificates
-    init?(key: Data, certs: [Data])
+    init?(key: (pkcs12: Data, password: String), pemCerts: [Data])
 }
 
 public protocol SecureSocketDelegate : class {

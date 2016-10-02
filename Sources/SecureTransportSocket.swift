@@ -11,27 +11,14 @@ import Security
 
 
 private class SecureTransportCertificate : SecureSocketCertificate {
-    required public init?(key: Data, certs: [Data]) {
-        #if os(OSX)
-        var chain: [AnyObject]
+    required init?(key: (pkcs12: Data, password: String), pemCerts: [Data]) {
+        let options: [String: AnyObject] = [kSecImportExportPassphrase as String : key.password as AnyObject]
+        var cfKeyItems: CFArray?
+        guard SecPKCS12Import(key.pkcs12 as CFData, options as CFDictionary, &cfKeyItems) == noErr else { return nil }
+        guard let keyItems = cfKeyItems as [AnyObject]?, let identity = keyItems.first, CFGetTypeID(identity) == SecIdentityGetTypeID() else { return nil }
 
-        var cfkeys: CFArray?
-        guard SecItemImport(key as CFData, nil, nil, nil, [], nil, nil, &cfkeys) == noErr else { return nil }
-        guard let keys = (cfkeys as [AnyObject]?), keys.count == 1, CFGetTypeID(keys[0]) == SecIdentityGetTypeID() else { return nil }
-        chain = [keys[0]]
-
-        for certs in certs {
-            var cfitems: CFArray?
-            guard SecItemImport(certs as CFData, nil, nil, nil, [], nil, nil, &cfitems) == noErr else { return nil }
-            guard let items = (cfitems as [AnyObject]?) else { return nil }
-            let certitems = items.filter { CFGetTypeID($0) == SecCertificateGetTypeID() }
-            chain.append(contentsOf: certitems)
-        }
-
-        certificateChain = chain as CFArray
-        #else
-        assertionFailure("Sorry, certificates aren't supported on iOS platforms.")
-        #endif
+        let certs: [AnyObject] = pemCerts.flatMap { SecCertificateCreateWithData(nil, $0 as CFData) }
+        certificateChain = ([identity] + certs) as CFArray
     }
 
     let certificateChain: CFArray
