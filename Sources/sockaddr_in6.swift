@@ -29,6 +29,7 @@ extension in6_addr : Hashable, CustomStringConvertible {
 
     public static let any = in6_addr(bytes: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])
     public static let loopback = in6_addr(bytes: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1])
+    public static let loopback4 = in6_addr("127.0.0.1")!
 
     /**
         Initialise with either 4- or 16-byte address
