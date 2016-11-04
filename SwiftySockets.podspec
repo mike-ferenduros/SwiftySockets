@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = 'SwiftySockets'
-  s.version          = '0.3.5'
+  s.version          = '0.3.6'
   s.summary          = 'An early, Swifty socket wrapper library'
 
   s.description      = <<-DESC
